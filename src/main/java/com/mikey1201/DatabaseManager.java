@@ -119,4 +119,18 @@ public class DatabaseManager {
         }
         return topBalances;
     }
+
+    public UUID getUUID(String playerName) {
+        String sql = "SELECT uuid FROM players WHERE last_known_name = ? COLLATE NOCASE";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, playerName);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                String foundUuid = rs.getString("uuid");
+                return UUID.fromString(foundUuid);
+            }
+        } catch (Exception ignored) { }
+
+        return null;
+    }
 }

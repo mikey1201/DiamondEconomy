@@ -29,9 +29,12 @@ public final class DiamondEconomy extends JavaPlugin {
         economyProvider = new EconomyProvider(databaseManager);
 
         VaultHook.hook(this, databaseManager, getLogger());
-        getLogger().info("DiamondEconomy has been enabled!");
 
         registerCommands();
+
+        getServer().getPluginManager().registerEvents(new PlayerAccountListener(databaseManager), this);
+
+        getLogger().info("DiamondEconomy has been enabled!");
     }
 
     private void registerCommands() {
