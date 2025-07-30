@@ -1,0 +1,28 @@
+name: DiamondEconomy
+version: 1.0.0
+main: com.mikey1201.DiamondEconomy
+api-version: '1.18'
+author: mikey1201
+description: A lightweight, diamond-based economy plugin using Vault.
+depend: [Vault]
+
+commands:
+  balance:
+    description: Checks your balance.
+    usage: /<command> [player]
+    aliases: [bal]
+  deposit:
+    description: Deposits diamonds from your inventory into your account.
+    usage: /<command> <amount|all>
+    aliases: [dep, depo]
+  withdraw:
+    description: Withdraws diamonds from your account to your inventory.
+    usage: /<command> <amount|all>
+    aliases: [wit, with]
+  pay:
+    description: Pays another player from your balance.
+    usage: /<command> <player> <amount>
+  baltop:
+    description: Shows the players with the highest balances.
+    usage: /<command>
+    aliases: [top, balancetop]
