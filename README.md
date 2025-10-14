@@ -24,13 +24,13 @@ A lightweight, diamond-based economy plugin using Vault.
 
 ## Commands
 
-| Command | Alias(es) | Description |
-| :--- | :--- | :--- |
-| `/balance` | `/bal` | Checks your current balance. |
+| Command | Alias(es)       | Description |
+| :--- |:----------------| :--- |
+| `/balance` | `/bal`          | Checks your current balance. |
 | `/deposit <amount\|all>` | `/dep`, `/depo` | Deposits diamonds from your inventory. |
-| `/withdraw <amount\|all>` | `/with` | Withdraws diamonds into your inventory. |
-| `/pay <player> <amount>`| *none* | Pays another player from your balance. |
-| `/baltop` | `/balancetop` | Shows the server's balance leaderboard. |
+| `/withdraw <amount\|all>` | `/with`         | Withdraws diamonds into your inventory. |
+| `/pay <player> <amount>`| `none`           | Pays another player from your balance. |
+| `/baltop` | `/balancetop`   | Shows the server's balance leaderboard. |
 
 ## Examples
 

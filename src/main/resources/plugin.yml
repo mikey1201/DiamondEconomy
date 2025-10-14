@@ -1,10 +1,11 @@
 name: DiamondEconomy
-version: 1.0.1
+version: 1.0.2
 main: com.mikey1201.DiamondEconomy
 api-version: '1.18'
 author: mikey1201
 description: A lightweight, diamond-based economy plugin using Vault.
 depend: [Vault]
+folia-supported: true
 
 commands:
   balance:

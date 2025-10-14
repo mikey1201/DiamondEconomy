@@ -33,7 +33,7 @@ public class WithdrawCommand implements CommandExecutor {
         int amountToWithdraw;
 
         if (args[0].equalsIgnoreCase("all")) {
-            amountToWithdraw = (int) currentBalance; // Truncate fractional part
+            amountToWithdraw = (int) currentBalance;
         } else {
             try {
                 amountToWithdraw = Integer.parseInt(args[0]);

@@ -18,7 +18,7 @@ public class BaltopCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        Map<String, Double> topBalances = database.getTopBalances(10); // Get top 10
+        Map<String, Double> topBalances = database.getTopBalances(10);
 
         if (topBalances.isEmpty()) {
             sender.sendMessage(ChatColor.YELLOW + "There are no balances to display yet.");

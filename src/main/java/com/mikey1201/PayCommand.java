@@ -47,7 +47,6 @@ public class PayCommand implements CommandExecutor {
                 payer.sendMessage(ChatColor.RED + "Payment amount must be positive.");
                 return true;
             }
-            // Round to 2 decimal places to avoid precision issues
             amount = Math.round(amount * 100.0) / 100.0;
 
         } catch (NumberFormatException e) {
