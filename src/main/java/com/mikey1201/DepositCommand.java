@@ -66,7 +66,7 @@ public class DepositCommand implements CommandExecutor {
 
     private int getDiamondCount(Player player) {
         int count = 0;
-        for (ItemStack item : player.getInventory().getContents()) {
+        for (ItemStack item : player.getInventory().getStorageContents()) {
             if (item != null && item.getType() == Material.DIAMOND) {
                 count += item.getAmount();
             }
