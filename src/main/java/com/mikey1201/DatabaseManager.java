@@ -1,11 +1,18 @@
 package com.mikey1201;
 
-import org.bukkit.OfflinePlayer;
-
 import java.io.File;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Logger;
+
+import org.bukkit.OfflinePlayer;
 
 public class DatabaseManager {
 
@@ -102,6 +109,37 @@ public class DatabaseManager {
             pstmt.executeUpdate();
         } catch (SQLException e) {
             logger.severe("Error updating balance: " + e.getMessage());
+        }
+    }
+
+    // FIX ADDED: Method to support /eco set command
+    public void setBalance(UUID uuid, double balance) {
+        // First, try to update the existing record
+        String updateSql = "UPDATE players SET balance = ? WHERE uuid = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(updateSql)) {
+            pstmt.setDouble(1, balance);
+            pstmt.setString(2, uuid.toString());
+            int rowsUpdated = pstmt.executeUpdate();
+
+            // If no rows were updated, the player doesn't exist. Create the account.
+            if (rowsUpdated == 0) {
+                createPlayerAccountWithBalance(uuid, balance);
+            }
+        } catch (SQLException e) {
+            logger.severe("Error setting balance: " + e.getMessage());
+        }
+    }
+
+    // Helper for setBalance to create a row if missing
+    private void createPlayerAccountWithBalance(UUID uuid, double balance) {
+        String sql = "INSERT INTO players(uuid, last_known_name, balance) VALUES(?,?,?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, uuid.toString());
+            pstmt.setString(2, "Unknown"); // Name is unknown if set purely by UUID in Admin command
+            pstmt.setDouble(3, balance);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            logger.severe("Error creating player account during setBalance: " + e.getMessage());
         }
     }
 

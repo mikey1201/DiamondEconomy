@@ -1,8 +1,9 @@
 package com.mikey1201;
 
+import java.sql.SQLException;
+
 import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
-import java.sql.SQLException;
 
 public final class DiamondEconomy extends JavaPlugin {
 
@@ -11,7 +12,6 @@ public final class DiamondEconomy extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        
         if (!getDataFolder().exists()) {
             getDataFolder().mkdirs();
         }
@@ -27,12 +27,11 @@ public final class DiamondEconomy extends JavaPlugin {
         }
 
         economyProvider = new EconomyProvider(databaseManager);
-        VaultHook.hook(this, databaseManager, getLogger());8D81-E3FA
+        VaultHook.hook(this, databaseManager, getLogger());
     }
 
     @Override
     public void onEnable() {
-
         if (databaseManager == null || economyProvider == null) {
             getLogger().severe("Critical components failed to load in onLoad. Disabling plugin.");
             getServer().getPluginManager().disablePlugin(this);
@@ -63,6 +62,8 @@ public final class DiamondEconomy extends JavaPlugin {
 
         this.getCommand("baltop").setExecutor(new BaltopCommand(databaseManager, economyProvider));
         this.getCommand("baltop").setTabCompleter(tabCompleter);
+
+        this.getCommand("eco").setExecutor(new EcoCommand(economyProvider, databaseManager));
     }
 
     @Override

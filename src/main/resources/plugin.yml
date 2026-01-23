@@ -9,9 +9,13 @@ folia-supported: true
 
 commands:
   balance:
-    description: Checks your balance.
+    description: Check your balance or another player's balance.
     usage: /<command> [player]
-    aliases: [bal]
+    aliases: [bal, money]
+  eco:
+    description: Manage the economy.
+    usage: /<command> <give|take|set> <player> <amount>
+    permission: diamondeconomy.admin
   deposit:
     description: Deposits diamonds from your inventory into your account.
     usage: /<command> <amount|all>
