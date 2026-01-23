@@ -1,9 +1,9 @@
 package com.mikey1201;
 
-import java.sql.SQLException;
-
+import org.bukkit.Material;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
+import java.sql.SQLException;
 
 public final class DiamondEconomy extends JavaPlugin {
 
@@ -12,6 +12,7 @@ public final class DiamondEconomy extends JavaPlugin {
 
     @Override
     public void onLoad() {
+        // ... (Keep existing onLoad code) ...
         if (!getDataFolder().exists()) {
             getDataFolder().mkdirs();
         }
@@ -38,23 +39,47 @@ public final class DiamondEconomy extends JavaPlugin {
             return;
         }
 
-        registerCommands();
+        // FIX APPLIED: Save default config and load currency item
+        saveDefaultConfig();
+        Material currencyItem = getCurrencyMaterial();
+
+        registerCommands(currencyItem);
 
         getServer().getPluginManager().registerEvents(new PlayerAccountListener(databaseManager), this);
 
         getLogger().info("DiamondEconomy has been enabled!");
     }
 
-    private void registerCommands() {
+    private Material getCurrencyMaterial() {
+        String configName = getConfig().getString("currency-item", "DIAMOND");
+        Material material = Material.getMaterial(configName);
+
+        if (material == null) {
+            getLogger().warning("Invalid material '" + configName + "' in config.yml. Defaulting to DIAMOND.");
+            return Material.DIAMOND;
+        }
+        if (!material.isItem()) {
+            getLogger().warning("Material '" + configName + "' is not a valid item. Defaulting to DIAMOND.");
+            return Material.DIAMOND;
+        }
+        
+        getLogger().info("Currency item set to: " + material.name());
+        return material;
+    }
+
+    // UPDATED: Now accepts Material argument
+    private void registerCommands(Material currencyItem) {
         TabCompleter tabCompleter = new CommandTabCompleter();
 
         this.getCommand("balance").setExecutor(new BalanceCommand(economyProvider));
         this.getCommand("balance").setTabCompleter(tabCompleter);
 
-        this.getCommand("deposit").setExecutor(new DepositCommand(economyProvider));
+        // FIX: Pass currencyItem here
+        this.getCommand("deposit").setExecutor(new DepositCommand(economyProvider, currencyItem));
         this.getCommand("deposit").setTabCompleter(tabCompleter);
 
-        this.getCommand("withdraw").setExecutor(new WithdrawCommand(economyProvider));
+        // FIX: Pass currencyItem here
+        this.getCommand("withdraw").setExecutor(new WithdrawCommand(economyProvider, currencyItem));
         this.getCommand("withdraw").setTabCompleter(tabCompleter);
 
         this.getCommand("pay").setExecutor(new PayCommand(economyProvider));

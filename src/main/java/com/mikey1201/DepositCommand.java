@@ -11,9 +11,12 @@ import org.bukkit.inventory.ItemStack;
 public class DepositCommand implements CommandExecutor {
 
     private final EconomyProvider economy;
+    private final Material currencyItem;
 
-    public DepositCommand(EconomyProvider economy) {
+    // UPDATED: Accept Material in constructor
+    public DepositCommand(EconomyProvider economy, Material currencyItem) {
         this.economy = economy;
+        this.currencyItem = currencyItem;
     }
 
     @Override
@@ -31,7 +34,7 @@ public class DepositCommand implements CommandExecutor {
         int amountToDeposit;
 
         if (args[0].equalsIgnoreCase("all")) {
-            amountToDeposit = getDiamondCount(player);
+            amountToDeposit = getCurrencyCount(player);
         } else {
             try {
                 amountToDeposit = Integer.parseInt(args[0]);
@@ -46,17 +49,18 @@ public class DepositCommand implements CommandExecutor {
         }
 
         if (amountToDeposit == 0) {
-            player.sendMessage(ChatColor.RED + "You have no diamonds to deposit.");
+            player.sendMessage(ChatColor.RED + "You have no " + currencyItem.name().toLowerCase().replace("_", " ") + "s to deposit.");
             return true;
         }
 
-        int diamondsInInventory = getDiamondCount(player);
-        if (diamondsInInventory < amountToDeposit) {
-            player.sendMessage(ChatColor.RED + "You only have " + ChatColor.AQUA + diamondsInInventory + " ⬧" + ChatColor.RED + " to deposit.");
+        int currencyInInventory = getCurrencyCount(player);
+        if (currencyInInventory < amountToDeposit) {
+            player.sendMessage(ChatColor.RED + "You only have " + ChatColor.AQUA + currencyInInventory + " ⬧" + ChatColor.RED + " to deposit.");
             return true;
         }
 
-        player.getInventory().removeItem(new ItemStack(Material.DIAMOND, amountToDeposit));
+        // FIX: Use currencyItem variable
+        player.getInventory().removeItem(new ItemStack(currencyItem, amountToDeposit));
         economy.depositPlayer(player, amountToDeposit);
 
         player.sendMessage(ChatColor.GREEN + "You have deposited " + ChatColor.AQUA + amountToDeposit + " ⬧.");
@@ -64,10 +68,11 @@ public class DepositCommand implements CommandExecutor {
         return true;
     }
 
-    private int getDiamondCount(Player player) {
+    private int getCurrencyCount(Player player) {
         int count = 0;
         for (ItemStack item : player.getInventory().getStorageContents()) {
-            if (item != null && item.getType() == Material.DIAMOND) {
+            // FIX: Check against currencyItem
+            if (item != null && item.getType() == currencyItem) {
                 count += item.getAmount();
             }
         }
