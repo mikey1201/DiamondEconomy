@@ -1,7 +1,6 @@
 package com.mikey1201;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -10,22 +9,24 @@ import org.bukkit.command.CommandSender;
 public class EcoCommand implements CommandExecutor {
 
     private final EconomyProvider economy;
+    private final MessageManager messages;
     private final DatabaseManager database;
 
-    public EcoCommand(EconomyProvider economy, DatabaseManager database) {
+    public EcoCommand(EconomyProvider economy, MessageManager messages, DatabaseManager database) {
         this.economy = economy;
+        this.messages = messages;
         this.database = database;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("diamondeconomy.admin")) {
-            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+            sender.sendMessage(messages.get("errors.no-permission"));
             return true;
         }
 
         if (args.length != 3) {
-            sender.sendMessage(ChatColor.RED + "Usage: /" + label + " <give|take|set> <player> <amount>");
+            sender.sendMessage(messages.get("eco.usage"));
             return true;
         }
 
@@ -36,45 +37,45 @@ public class EcoCommand implements CommandExecutor {
         try {
             amount = Double.parseDouble(args[2]);
             if (amount <= 0) {
-                sender.sendMessage(ChatColor.RED + "Amount must be positive.");
+                sender.sendMessage(messages.get("errors.positive-number"));
                 return true;
             }
         } catch (NumberFormatException e) {
-            sender.sendMessage(ChatColor.RED + "Invalid amount: " + args[2]);
+            sender.sendMessage(messages.get("errors.invalid-number", "{input}", args[2]));
             return true;
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
         
-        if (target == null || !target.hasPlayedBefore() && !target.isOnline()) {
-            sender.sendMessage(ChatColor.RED + "Player not found: " + targetName);
+        if (target == null || (!target.hasPlayedBefore() && !target.isOnline())) {
+            sender.sendMessage(messages.get("errors.player-not-found"));
             return true;
         }
 
         switch (action) {
             case "give":
                 economy.depositPlayer(target, amount);
-                sender.sendMessage(ChatColor.GREEN + "Gave " + ChatColor.AQUA + amount + " ⬧" + ChatColor.GREEN + " to " + targetName + ".");
+                sender.sendMessage(messages.get("eco.give", "{amount}", String.valueOf(amount), "{player}", targetName));
                 break;
             case "take":
                 if (economy.getBalance(target) < amount) {
-                    sender.sendMessage(ChatColor.RED + targetName + " does not have enough funds.");
+                    sender.sendMessage(messages.get("errors.insufficient-funds"));
                     return true;
                 }
                 economy.withdrawPlayer(target, amount);
-                sender.sendMessage(ChatColor.GREEN + "Took " + ChatColor.AQUA + amount + " ⬧" + ChatColor.GREEN + " from " + targetName + ".");
+                sender.sendMessage(messages.get("eco.take", "{amount}", String.valueOf(amount), "{player}", targetName));
                 break;
             case "set":
                 try {
                     database.setBalance(target.getUniqueId(), amount);
-                    sender.sendMessage(ChatColor.GREEN + "Set " + targetName + "'s balance to " + ChatColor.AQUA + amount + " ⬧.");
+                    sender.sendMessage(messages.get("eco.set", "{player}", targetName, "{amount}", String.valueOf(amount)));
                 } catch (Exception e) {
-                    sender.sendMessage(ChatColor.RED + "Error setting balance. Check console.");
+                    sender.sendMessage(messages.get("errors.unknown-error"));
                     e.printStackTrace();
                 }
                 break;
             default:
-                sender.sendMessage(ChatColor.RED + "Unknown action. Use: give, take, or set.");
+                sender.sendMessage(messages.get("eco.unknown-action"));
                 return true;
         }
 

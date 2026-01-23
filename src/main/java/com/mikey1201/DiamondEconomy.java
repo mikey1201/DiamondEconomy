@@ -1,18 +1,20 @@
 package com.mikey1201;
 
+import java.sql.SQLException;
+
 import org.bukkit.Material;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
-import java.sql.SQLException;
 
 public final class DiamondEconomy extends JavaPlugin {
 
     private DatabaseManager databaseManager;
     private EconomyProvider economyProvider;
+    private MessageManager messageManager;
+    private HiddenPlayersManager hiddenPlayersManager;
 
     @Override
     public void onLoad() {
-        // ... (Keep existing onLoad code) ...
         if (!getDataFolder().exists()) {
             getDataFolder().mkdirs();
         }
@@ -39,10 +41,11 @@ public final class DiamondEconomy extends JavaPlugin {
             return;
         }
 
-        // FIX APPLIED: Save default config and load currency item
         saveDefaultConfig();
-        Material currencyItem = getCurrencyMaterial();
+        messageManager = new MessageManager(this);
+        hiddenPlayersManager = new HiddenPlayersManager(this);
 
+        Material currencyItem = getCurrencyMaterial();
         registerCommands(currencyItem);
 
         getServer().getPluginManager().registerEvents(new PlayerAccountListener(databaseManager), this);
@@ -54,12 +57,8 @@ public final class DiamondEconomy extends JavaPlugin {
         String configName = getConfig().getString("currency-item", "DIAMOND");
         Material material = Material.getMaterial(configName);
 
-        if (material == null) {
+        if (material == null || !material.isItem()) {
             getLogger().warning("Invalid material '" + configName + "' in config.yml. Defaulting to DIAMOND.");
-            return Material.DIAMOND;
-        }
-        if (!material.isItem()) {
-            getLogger().warning("Material '" + configName + "' is not a valid item. Defaulting to DIAMOND.");
             return Material.DIAMOND;
         }
         
@@ -67,28 +66,27 @@ public final class DiamondEconomy extends JavaPlugin {
         return material;
     }
 
-    // UPDATED: Now accepts Material argument
     private void registerCommands(Material currencyItem) {
         TabCompleter tabCompleter = new CommandTabCompleter();
 
-        this.getCommand("balance").setExecutor(new BalanceCommand(economyProvider));
+        this.getCommand("balance").setExecutor(new BalanceCommand(economyProvider, messageManager));
         this.getCommand("balance").setTabCompleter(tabCompleter);
 
-        // FIX: Pass currencyItem here
-        this.getCommand("deposit").setExecutor(new DepositCommand(economyProvider, currencyItem));
+        this.getCommand("deposit").setExecutor(new DepositCommand(economyProvider, messageManager, currencyItem));
         this.getCommand("deposit").setTabCompleter(tabCompleter);
 
-        // FIX: Pass currencyItem here
-        this.getCommand("withdraw").setExecutor(new WithdrawCommand(economyProvider, currencyItem));
+        this.getCommand("withdraw").setExecutor(new WithdrawCommand(economyProvider, messageManager, currencyItem));
         this.getCommand("withdraw").setTabCompleter(tabCompleter);
 
-        this.getCommand("pay").setExecutor(new PayCommand(economyProvider));
+        this.getCommand("pay").setExecutor(new PayCommand(economyProvider, messageManager));
         this.getCommand("pay").setTabCompleter(tabCompleter);
 
-        this.getCommand("baltop").setExecutor(new BaltopCommand(databaseManager, economyProvider));
+        this.getCommand("baltop").setExecutor(new BaltopCommand(databaseManager, economyProvider, messageManager, hiddenPlayersManager));
         this.getCommand("baltop").setTabCompleter(tabCompleter);
 
-        this.getCommand("eco").setExecutor(new EcoCommand(economyProvider, databaseManager));
+        this.getCommand("eco").setExecutor(new EcoCommand(economyProvider, messageManager, databaseManager));
+        
+        this.getCommand("diamondeconomy").setExecutor(new DiamondEconomyCommand(this, messageManager));
     }
 
     @Override

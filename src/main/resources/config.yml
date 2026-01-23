@@ -1,3 +1,6 @@
 # The material to use as the physical currency item.
 # Supports any valid Bukkit Material name (e.g., DIAMOND, EMERALD, AMETHYST_SHARD)
 currency-item: DIAMOND
+
+# The symbol to use for text displays.
+currency-symbol: "⬧"

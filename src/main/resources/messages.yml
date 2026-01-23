@@ -1,0 +1,52 @@
+prefix: "&6[&bDiamondEconomy&6] &r"
+
+errors:
+  no-permission: "&cYou do not have permission to use this command."
+  player-only: "&cThis command can only be run by a player."
+  invalid-number: "&cInvalid number: {input}"
+  player-not-found: "&cPlayer not found."
+  insufficient-funds: "&cYou do not have enough funds."
+  insufficient-items: "&cYou only have &e{amount} {symbol}&c to deposit."
+  inventory-full: "&cYou do not have enough inventory space."
+  positive-number: "&cPlease enter a positive number."
+  zero-deposit: "&cYou have no {currency} to deposit."
+  fractional-items: "&cYou cannot deposit/withdraw fractional items (e.g. 0.5)."
+  pay-yourself: "&cYou cannot pay yourself."
+  usage-pay: "&cUsage: /pay <player> <amount>"
+  usage-amount: "&cUsage: /{label} <amount|all>"
+
+balance:
+  self: "&aYour balance: &e{amount}{symbol}"
+  other: "&e{player}'s Balance: &e{amount}{symbol}"
+
+deposit:
+  success: "&aYou have deposited &e{amount} {symbol}&a."
+  new-balance: "New balance: &e{amount}{symbol}"
+
+withdraw:
+  success: "&aYou have withdrawn &e{amount} {symbol}&a."
+  new-balance: "New balance: &e{amount}{symbol}"
+  under-one: "&cYou don't have enough balance to withdraw a whole item (Balance: &e{amount}{symbol}&c)."
+
+pay:
+  sent: "&aYou sent &e{amount} {symbol} &ato &e{player}&a."
+  received: "&aYou received &e{amount} {symbol} &afrom &e{player}&a."
+
+eco:
+  give: "&aGave &e{amount} {symbol} &ato &e{player}&a."
+  take: "&aTook &e{amount} {symbol} &afrom &e{player}&a."
+  set: "&aSet &e{player}'s &abalance to &e{amount} {symbol}."
+  usage: "&cUsage: /eco <give|take|set> <player> <amount>"
+  unknown-action: "&cUnknown action. Use: give, take, or set."
+
+baltop:
+  header: "&6--- Top Balances ---"
+  empty: "&eThere are no balances to display yet."
+  entry: "&e{rank}. &a{player} &f: &b{amount}{symbol}"
+
+toggle:
+  hidden: "&aYour balance is now hidden from /baltop."
+  visible: "&aYour balance is now visible in /baltop."
+
+reload:
+  success: "&aConfiguration and messages reloaded."
