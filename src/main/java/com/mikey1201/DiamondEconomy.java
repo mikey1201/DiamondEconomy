@@ -10,7 +10,8 @@ public final class DiamondEconomy extends JavaPlugin {
     private EconomyProvider economyProvider;
 
     @Override
-    public void onEnable() {
+    public void onLoad() {
+        
         if (!getDataFolder().exists()) {
             getDataFolder().mkdirs();
         }
@@ -20,15 +21,23 @@ public final class DiamondEconomy extends JavaPlugin {
             databaseManager.connect();
             databaseManager.initialize();
         } catch (SQLException e) {
-            getLogger().severe("Failed to initialize the database! Disabling plugin.");
+            getLogger().severe("Failed to initialize the database! The plugin may not function correctly.");
             e.printStackTrace();
-            getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
         economyProvider = new EconomyProvider(databaseManager);
+        VaultHook.hook(this, databaseManager, getLogger());8D81-E3FA
+    }
 
-        VaultHook.hook(this, databaseManager, getLogger());
+    @Override
+    public void onEnable() {
+
+        if (databaseManager == null || economyProvider == null) {
+            getLogger().severe("Critical components failed to load in onLoad. Disabling plugin.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
         registerCommands();
 
