@@ -4,3 +4,10 @@ currency-item: DIAMOND
 
 # The symbol to use for text displays.
 currency-symbol: "⬧"
+
+# Check for new versions on startup? (Connects to GitHub)
+check-for-updates: true# The material to use as the physical currency item.
+
+# Send anonymous server stats to bStats for plugin improvements?
+# This is completely anonymous and helps me know which versions are popular.
+bstats-enabled: true

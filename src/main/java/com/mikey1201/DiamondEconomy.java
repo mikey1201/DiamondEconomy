@@ -2,6 +2,8 @@ package com.mikey1201;
 
 import java.sql.SQLException;
 
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
 import org.bukkit.Material;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -12,6 +14,9 @@ public final class DiamondEconomy extends JavaPlugin {
     private EconomyProvider economyProvider;
     private MessageManager messageManager;
     private HiddenPlayersManager hiddenPlayersManager;
+
+    private static final int BSTATS_ID = 29024;
+
 
     @Override
     public void onLoad() {
@@ -42,13 +47,31 @@ public final class DiamondEconomy extends JavaPlugin {
         }
 
         saveDefaultConfig();
+        
         messageManager = new MessageManager(this);
         hiddenPlayersManager = new HiddenPlayersManager(this);
 
         registerCommands();
 
+        if (getConfig().getBoolean("bstats-enabled", true)) {
+            Metrics metrics = new Metrics(this, BSTATS_ID);
+            addBStatsCharts(metrics);
+            getLogger().info("bStats metrics enabled. Thank you for helping!");
+        } else {
+            getLogger().info("bStats metrics disabled via config.yml.");
+        }
+
+        new UpdateChecker(this).checkForUpdates();
+
         getServer().getPluginManager().registerEvents(new PlayerAccountListener(databaseManager), this);
+
         getLogger().info("DiamondEconomy has been enabled!");
+    }
+
+    private void addBStatsCharts(Metrics metrics) {
+        metrics.addCustomChart(new SimplePie("used_item", () -> {
+            return getCurrencyMaterial().toString();
+        }));
     }
 
     private Material getCurrencyMaterial() {
@@ -59,10 +82,9 @@ public final class DiamondEconomy extends JavaPlugin {
             getLogger().warning("Invalid material '" + configName + "' in config.yml. Defaulting to DIAMOND.");
             return Material.DIAMOND;
         }
-        
-        getLogger().info("Currency item set to: " + material.name());
         return material;
     }
+
     private void registerCommands() {
         TabCompleter tabCompleter = new CommandTabCompleter();
 
