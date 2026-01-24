@@ -11,7 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class UpdateChecker {
 
     private final JavaPlugin plugin;
-    private static final String GITHUB_URL = "https://raw.githubusercontent.com/mikey1201/Coordy/refs/heads/main/pom.xml";
+    private static final String GITHUB_URL = "https://raw.githubusercontent.com/mikey1201/DiamondEconomy/main/pom.xml";
 
     public UpdateChecker(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -39,14 +39,14 @@ public class UpdateChecker {
                 }
                 reader.close();
 
-                String latestVersion = extractVersion(content.toString());
+                String rawLatest = extractVersion(content.toString());
+                String latestVersion = sanitizeVersion(rawLatest);
+                String currentVersion = sanitizeVersion(plugin.getDescription().getVersion());
 
                 if (latestVersion == null) {
                     plugin.getLogger().warning("Could not find version in pom.xml");
                     return;
                 }
-
-                String currentVersion = plugin.getDescription().getVersion();
 
                 if (!currentVersion.equals(latestVersion)) {
                     Bukkit.getScheduler().runTask(plugin, () -> {
@@ -64,16 +64,56 @@ public class UpdateChecker {
         });
     }
 
+    /**
+     * Finds the version specifically associated with the 'DiamondEconomy' artifact ID.
+     * This prevents accidentally grabbing dependency or parent versions.
+     */
     private String extractVersion(String xml) {
+        String artifactId = "<artifactId>DiamondEconomy</artifactId>";
+        int index = xml.indexOf(artifactId);
+
+        if (index == -1) {
+            // Fallback: If artifact ID not found (e.g., renamed), just grab the first version
+            return extractFirstVersion(xml);
+        }
+
+        // Search within the next 500 characters after the artifact ID to find the version tag
+        String searchArea = xml.substring(index, Math.min(index + 500, xml.length()));
+
+        int start = searchArea.indexOf("<version>");
+        int end = searchArea.indexOf("</version>");
+
+        if (start != -1 && end != -1) {
+            return searchArea.substring(start + 9, end).trim();
+        }
+
+        return null;
+    }
+
+    /**
+     * Fallback method: Returns the first version tag found in the file.
+     */
+    private String extractFirstVersion(String xml) {
         String startTag = "<version>";
         String endTag = "</version>";
-        
-        int lastStart = xml.lastIndexOf(startTag);
-        int lastEnd = xml.lastIndexOf(endTag);
+        int start = xml.indexOf(startTag);
+        int end = xml.indexOf(endTag);
 
-        if (lastStart != -1 && lastEnd != -1 && lastEnd > lastStart) {
-            return xml.substring(lastStart + startTag.length(), lastEnd).trim();
+        if (start != -1 && end != -1 && end > start) {
+            return xml.substring(start + startTag.length(), end).trim();
         }
         return null;
+    }
+
+    private String sanitizeVersion(String version) {
+        if (version == null) return null;
+        version = version.trim();
+        if (version.startsWith("v") || version.startsWith("V")) {
+            version = version.substring(1).trim();
+        }
+        if (version.endsWith("-SNAPSHOT")) {
+            version = version.substring(0, version.length() - 9).trim();
+        }
+        return version;
     }
 }
