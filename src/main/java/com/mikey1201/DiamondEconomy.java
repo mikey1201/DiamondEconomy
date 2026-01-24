@@ -70,7 +70,9 @@ public final class DiamondEconomy extends JavaPlugin {
 
     private void addBStatsCharts(Metrics metrics) {
         metrics.addCustomChart(new SimplePie("used_item", () -> {
-            return getCurrencyMaterial().toString();
+            Material mat = getCurrencyMaterial();
+            String matName = (mat == null) ? "NULL_MATERIAL" : mat.name();
+            return matName;
         }));
     }
 

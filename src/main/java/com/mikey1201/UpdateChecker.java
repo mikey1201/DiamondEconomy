@@ -64,20 +64,14 @@ public class UpdateChecker {
         });
     }
 
-    /**
-     * Finds the version specifically associated with the 'DiamondEconomy' artifact ID.
-     * This prevents accidentally grabbing dependency or parent versions.
-     */
     private String extractVersion(String xml) {
         String artifactId = "<artifactId>DiamondEconomy</artifactId>";
         int index = xml.indexOf(artifactId);
 
         if (index == -1) {
-            // Fallback: If artifact ID not found (e.g., renamed), just grab the first version
             return extractFirstVersion(xml);
         }
 
-        // Search within the next 500 characters after the artifact ID to find the version tag
         String searchArea = xml.substring(index, Math.min(index + 500, xml.length()));
 
         int start = searchArea.indexOf("<version>");
@@ -90,9 +84,6 @@ public class UpdateChecker {
         return null;
     }
 
-    /**
-     * Fallback method: Returns the first version tag found in the file.
-     */
     private String extractFirstVersion(String xml) {
         String startTag = "<version>";
         String endTag = "</version>";
