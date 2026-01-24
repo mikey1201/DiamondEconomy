@@ -40,13 +40,13 @@ public class BalanceCommand implements CommandExecutor {
         }
 
         double balance = economy.getBalance(target);
-        String playerName = target.getName() != null ? target.getName() : "Unknown";
         String formattedBalance = economy.format(balance);
+        String playerName = target.getName() != null ? target.getName() : "Unknown";
 
         if (sender.equals(target)) {
-            sender.sendMessage(messages.get("balance.self", "{balance}", formattedBalance));
+            sender.sendMessage(messages.get("balance.self", "{amount}", formattedBalance));
         } else {
-            sender.sendMessage(messages.get("balance.other", "{player}", playerName, "{balance}", formattedBalance));
+            sender.sendMessage(messages.get("balance.other", "{player}", playerName, "{amount}", formattedBalance));
         }
 
         return true;

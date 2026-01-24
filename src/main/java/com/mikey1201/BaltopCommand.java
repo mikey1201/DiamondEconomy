@@ -1,14 +1,15 @@
 package com.mikey1201;
 
-import java.util.Map;
-import java.util.UUID;
-
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.Map;
+import java.util.UUID;
 
 public class BaltopCommand implements CommandExecutor {
 
@@ -59,7 +60,7 @@ public class BaltopCommand implements CommandExecutor {
         
         int count = 0;
         for (Map.Entry<UUID, Double> entry : potentialBalances.entrySet()) {
-            if (count >= 10) break;
+            if (count >= 10) break; 
 
             UUID uuid = entry.getKey();
 
@@ -76,7 +77,7 @@ public class BaltopCommand implements CommandExecutor {
             sender.sendMessage(messages.get("baltop.entry", 
                 "{rank}", String.valueOf(count + 1), 
                 "{player}", playerName,
-                "{balance}", formattedBalance
+                "{amount}", formattedBalance
             ));
             
             count++;

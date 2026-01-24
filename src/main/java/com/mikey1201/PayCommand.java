@@ -1,12 +1,11 @@
 package com.mikey1201;
 
-import java.text.DecimalFormat;
-
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import java.text.DecimalFormat;
 
 public class PayCommand implements CommandExecutor {
 

@@ -45,11 +45,9 @@ public final class DiamondEconomy extends JavaPlugin {
         messageManager = new MessageManager(this);
         hiddenPlayersManager = new HiddenPlayersManager(this);
 
-        Material currencyItem = getCurrencyMaterial();
-        registerCommands(currencyItem);
+        registerCommands();
 
         getServer().getPluginManager().registerEvents(new PlayerAccountListener(databaseManager), this);
-
         getLogger().info("DiamondEconomy has been enabled!");
     }
 
@@ -65,17 +63,16 @@ public final class DiamondEconomy extends JavaPlugin {
         getLogger().info("Currency item set to: " + material.name());
         return material;
     }
-
-    private void registerCommands(Material currencyItem) {
+    private void registerCommands() {
         TabCompleter tabCompleter = new CommandTabCompleter();
 
         this.getCommand("balance").setExecutor(new BalanceCommand(economyProvider, messageManager));
         this.getCommand("balance").setTabCompleter(tabCompleter);
 
-        this.getCommand("deposit").setExecutor(new DepositCommand(economyProvider, messageManager, currencyItem));
+        this.getCommand("deposit").setExecutor(new DepositCommand(economyProvider, messageManager, this));
         this.getCommand("deposit").setTabCompleter(tabCompleter);
 
-        this.getCommand("withdraw").setExecutor(new WithdrawCommand(economyProvider, messageManager, currencyItem));
+        this.getCommand("withdraw").setExecutor(new WithdrawCommand(economyProvider, messageManager, this));
         this.getCommand("withdraw").setTabCompleter(tabCompleter);
 
         this.getCommand("pay").setExecutor(new PayCommand(economyProvider, messageManager));
@@ -85,7 +82,6 @@ public final class DiamondEconomy extends JavaPlugin {
         this.getCommand("baltop").setTabCompleter(tabCompleter);
 
         this.getCommand("eco").setExecutor(new EcoCommand(economyProvider, messageManager, databaseManager));
-        
         this.getCommand("diamondeconomy").setExecutor(new DiamondEconomyCommand(this, messageManager));
     }
 

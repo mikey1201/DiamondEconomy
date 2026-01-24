@@ -36,7 +36,9 @@ public class EcoCommand implements CommandExecutor {
         double amount;
         try {
             amount = Double.parseDouble(args[2]);
-            if (amount <= 0) {
+            
+            // FIX: Changed from <= 0 to < 0 to allow setting balance to 0
+            if (amount < 0) {
                 sender.sendMessage(messages.get("errors.positive-number"));
                 return true;
             }
@@ -55,6 +57,7 @@ public class EcoCommand implements CommandExecutor {
         switch (action) {
             case "give":
                 economy.depositPlayer(target, amount);
+                // FIX: Pass amount and player name to placeholders
                 sender.sendMessage(messages.get("eco.give", "{amount}", String.valueOf(amount), "{player}", targetName));
                 break;
             case "take":
@@ -70,7 +73,7 @@ public class EcoCommand implements CommandExecutor {
                     database.setBalance(target.getUniqueId(), amount);
                     sender.sendMessage(messages.get("eco.set", "{player}", targetName, "{amount}", String.valueOf(amount)));
                 } catch (Exception e) {
-                    sender.sendMessage(messages.get("errors.unknown-error"));
+                    sender.sendMessage(messages.get("errors.unknown-error")); // Ensure this key exists in messages.yml or remove it
                     e.printStackTrace();
                 }
                 break;

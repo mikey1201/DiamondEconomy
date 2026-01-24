@@ -6,17 +6,19 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class WithdrawCommand implements CommandExecutor {
 
     private final EconomyProvider economy;
     private final MessageManager messages;
-    private final Material currencyItem;
+    private final JavaPlugin plugin;
 
-    public WithdrawCommand(EconomyProvider economy, MessageManager messages, Material currencyItem) {
+    // CONSTRUCTOR UPDATED: Accepts JavaPlugin instead of Material
+    public WithdrawCommand(EconomyProvider economy, MessageManager messages, JavaPlugin plugin) {
         this.economy = economy;
         this.messages = messages;
-        this.currencyItem = currencyItem;
+        this.plugin = plugin;
     }
 
     @Override
@@ -26,13 +28,14 @@ public class WithdrawCommand implements CommandExecutor {
             return true;
         }
         if (args.length != 1) {
-            sender.sendMessage(messages.get("errors.usage-amount"));
+            sender.sendMessage(messages.get("errors.usage-amount", "{label}", label));
             return true;
         }
 
         Player player = (Player) sender;
         int amountToWithdraw;
-
+        
+        Material currencyItem = getCurrencyMaterial();
         double currentBalance = economy.getBalance(player);
         
         if (args[0].equalsIgnoreCase("all")) {
@@ -57,7 +60,7 @@ public class WithdrawCommand implements CommandExecutor {
 
         if (amountToWithdraw == 0) {
             if (currentBalance < 1.0) {
-                 player.sendMessage(messages.get("withdraw.under-one", "{balance}", economy.format(currentBalance)));
+                 player.sendMessage(messages.get("withdraw.under-one", "{amount}", economy.format(currentBalance)));
             } else {
                  player.sendMessage(messages.get("errors.positive-number"));
             }
@@ -98,7 +101,16 @@ public class WithdrawCommand implements CommandExecutor {
         }
 
         player.sendMessage(messages.get("withdraw.success", "{amount}", String.valueOf(amountToWithdraw)));
-        player.sendMessage(messages.get("withdraw.new-balance", "{balance}", economy.format(economy.getBalance(player))));
+        player.sendMessage(messages.get("withdraw.new-balance", "{amount}", economy.format(economy.getBalance(player))));
         return true;
+    }
+    
+    private Material getCurrencyMaterial() {
+        String configName = plugin.getConfig().getString("currency-item", "DIAMOND");
+        Material material = Material.getMaterial(configName);
+        if (material == null || !material.isItem()) {
+            return Material.DIAMOND;
+        }
+        return material;
     }
 }
