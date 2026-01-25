@@ -1,5 +1,5 @@
 name: DiamondEconomy
-version: 1.2.0
+version: ${plugin.version}
 main: com.mikey1201.DiamondEconomy
 api-version: 1.18
 author: mikey1201
