@@ -1,9 +1,11 @@
-package com.mikey1201;
+package com.mikey1201.listeners;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+
+import com.mikey1201.managers.DatabaseManager;
 
 public class PlayerAccountListener implements Listener {
 

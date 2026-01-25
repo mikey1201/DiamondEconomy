@@ -1,15 +1,19 @@
-package com.mikey1201;
+package com.mikey1201.commands;
+
+import java.util.Map;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.Map;
-import java.util.UUID;
+import com.mikey1201.managers.DatabaseManager;
+import com.mikey1201.managers.HiddenPlayersManager;
+import com.mikey1201.managers.MessageManager;
+import com.mikey1201.providers.EconomyProvider;
 
 public class BaltopCommand implements CommandExecutor {
 

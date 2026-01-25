@@ -1,4 +1,4 @@
-package com.mikey1201;
+package com.mikey1201.utils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

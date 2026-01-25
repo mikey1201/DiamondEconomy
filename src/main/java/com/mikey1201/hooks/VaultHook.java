@@ -1,10 +1,14 @@
-package com.mikey1201;
+package com.mikey1201.hooks;
+
+import java.util.logging.Logger;
 
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
-import net.milkbowl.vault.economy.Economy;
 
-import java.util.logging.Logger;
+import com.mikey1201.managers.DatabaseManager;
+import com.mikey1201.providers.EconomyProvider;
+
+import net.milkbowl.vault.economy.Economy;
 
 public class VaultHook {
 

@@ -1,4 +1,4 @@
-package com.mikey1201;
+package com.mikey1201.commands;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -6,6 +6,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import com.mikey1201.managers.MessageManager;
+import com.mikey1201.providers.EconomyProvider;
 
 public class BalanceCommand implements CommandExecutor {
 

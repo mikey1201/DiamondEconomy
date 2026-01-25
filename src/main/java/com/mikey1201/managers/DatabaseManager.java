@@ -1,4 +1,4 @@
-package com.mikey1201;
+package com.mikey1201.managers;
 
 import java.io.File;
 import java.sql.Connection;

@@ -1,9 +1,12 @@
-package com.mikey1201;
+package com.mikey1201.commands;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+
+import com.mikey1201.DiamondEconomy;
+import com.mikey1201.managers.MessageManager;
 
 public class DiamondEconomyCommand implements CommandExecutor {
 

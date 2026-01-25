@@ -1,4 +1,4 @@
-package com.mikey1201;
+package com.mikey1201.providers;
 
 import java.util.List;
 import java.util.UUID;
@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+
+import com.mikey1201.managers.DatabaseManager;
 
 import net.milkbowl.vault.economy.AbstractEconomy;
 import net.milkbowl.vault.economy.EconomyResponse;
