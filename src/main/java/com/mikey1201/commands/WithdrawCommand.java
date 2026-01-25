@@ -10,6 +10,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
+import com.mikey1201.utils.InputUtils;
+import com.mikey1201.utils.PlayerUtils;
 
 public class WithdrawCommand implements CommandExecutor {
 
@@ -17,7 +19,6 @@ public class WithdrawCommand implements CommandExecutor {
     private final MessageManager messages;
     private final JavaPlugin plugin;
 
-    // CONSTRUCTOR UPDATED: Accepts JavaPlugin instead of Material
     public WithdrawCommand(EconomyProvider economy, MessageManager messages, JavaPlugin plugin) {
         this.economy = economy;
         this.messages = messages;
@@ -26,10 +27,10 @@ public class WithdrawCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(messages.get("errors.player-only"));
+        if (!PlayerUtils.isPlayer(sender, messages.get("errors.player-only"))) {
             return true;
         }
+        
         if (args.length != 1) {
             sender.sendMessage(messages.get("errors.usage-amount", "{label}", label));
             return true;
@@ -45,18 +46,11 @@ public class WithdrawCommand implements CommandExecutor {
             amountToWithdraw = (int) Math.floor(currentBalance);
         } else {
             try {
-                double parsedAmount = Double.parseDouble(args[0]);
-                if (parsedAmount <= 0) {
-                    player.sendMessage(messages.get("errors.positive-number"));
-                    return true;
-                }
-                if (parsedAmount % 1 != 0) {
-                    player.sendMessage(messages.get("errors.fractional-items"));
-                    return true;
-                }
+                double parsedAmount = InputUtils.parsePositiveDouble(args[0]);
+                InputUtils.checkWholeNumber(parsedAmount); // Throws error if fractional
                 amountToWithdraw = (int) parsedAmount;
-            } catch (NumberFormatException e) {
-                player.sendMessage(messages.get("errors.invalid-number", "{input}", args[0]));
+            } catch (IllegalArgumentException e) {
+                sender.sendMessage(messages.get("errors.invalid-number", "{input}", args[0]));
                 return true;
             }
         }

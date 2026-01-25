@@ -8,6 +8,22 @@ import org.bukkit.Material;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.mikey1201.commands.BalanceCommand;
+import com.mikey1201.commands.BaltopCommand;
+import com.mikey1201.commands.DepositCommand;
+import com.mikey1201.commands.DiamondEconomyCommand;
+import com.mikey1201.commands.EcoCommand;
+import com.mikey1201.commands.PayCommand;
+import com.mikey1201.commands.WithdrawCommand;
+import com.mikey1201.hooks.VaultHook;
+import com.mikey1201.listeners.PlayerAccountListener;
+import com.mikey1201.managers.DatabaseManager;
+import com.mikey1201.managers.HiddenPlayersManager;
+import com.mikey1201.managers.MessageManager;
+import com.mikey1201.providers.EconomyProvider;
+import com.mikey1201.utils.CommandTabCompleter;
+import com.mikey1201.utils.UpdateChecker;
+
 public final class DiamondEconomy extends JavaPlugin {
 
     private DatabaseManager databaseManager;

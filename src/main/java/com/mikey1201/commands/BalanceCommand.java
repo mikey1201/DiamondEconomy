@@ -1,6 +1,5 @@
 package com.mikey1201.commands;
 
-import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -9,6 +8,7 @@ import org.bukkit.entity.Player;
 
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
+import com.mikey1201.utils.PlayerUtils;
 
 public class BalanceCommand implements CommandExecutor {
 
@@ -35,8 +35,8 @@ public class BalanceCommand implements CommandExecutor {
                 sender.sendMessage(messages.get("errors.no-permission"));
                 return true;
             }
-            target = Bukkit.getOfflinePlayer(args[0]);
-            if (target == null || (!target.hasPlayedBefore() && !target.isOnline())) {
+            target = PlayerUtils.getOfflinePlayer(args[0]);
+            if (target == null) {
                 sender.sendMessage(messages.get("errors.player-not-found"));
                 return true;
             }

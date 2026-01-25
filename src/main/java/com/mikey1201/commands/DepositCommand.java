@@ -10,6 +10,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
+import com.mikey1201.utils.InputUtils;
 
 public class DepositCommand implements CommandExecutor {
 
@@ -17,7 +18,6 @@ public class DepositCommand implements CommandExecutor {
     private final MessageManager messages;
     private final JavaPlugin plugin;
 
-    // CONSTRUCTOR UPDATED: Accepts JavaPlugin instead of Material
     public DepositCommand(EconomyProvider economy, MessageManager messages, JavaPlugin plugin) {
         this.economy = economy;
         this.messages = messages;
@@ -45,18 +45,11 @@ public class DepositCommand implements CommandExecutor {
             amountToDeposit = getCurrencyCount(player, currencyItem);
         } else {
             try {
-                double parsedAmount = Double.parseDouble(args[0]);
-                if (parsedAmount <= 0) {
-                    player.sendMessage(messages.get("errors.positive-number"));
-                    return true;
-                }
-                if (parsedAmount % 1 != 0) {
-                    player.sendMessage(messages.get("errors.fractional-items"));
-                    return true;
-                }
+                double parsedAmount = InputUtils.parsePositiveDouble(args[0]);
+                InputUtils.checkWholeNumber(parsedAmount); // Throws error if fractional
                 amountToDeposit = (int) parsedAmount;
-            } catch (NumberFormatException e) {
-                player.sendMessage(messages.get("errors.invalid-number", "{input}", args[0]));
+            } catch (IllegalArgumentException e) {
+                player.sendMessage(messages.get("errors.invalid-number", "{input}", args[0])); 
                 return true;
             }
         }
