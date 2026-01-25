@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -42,7 +43,7 @@ public class DatabaseManager {
         try (Statement statement = connection.createStatement()) {
             statement.execute("CREATE TABLE IF NOT EXISTS players (" +
                     "uuid TEXT PRIMARY KEY," +
-                    "last_known_name TEXT NOT NULL," +
+                    "last_known_name TEXT NOT NULL DEFAULT 'Unknown'," +
                     "balance REAL NOT NULL DEFAULT 0.0" +
                     ");");
             logger.info("Database table initialized.");
@@ -73,10 +74,13 @@ public class DatabaseManager {
     }
 
     public void createPlayerAccount(OfflinePlayer player) {
+        // FIX: Handle null names to prevent constraint violation
+        String playerName = player.getName() != null ? player.getName() : "Unknown";
+        
         String sql = "INSERT OR IGNORE INTO players(uuid, last_known_name, balance) VALUES(?,?,?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, player.getUniqueId().toString());
-            pstmt.setString(2, player.getName() != null ? player.getName() : "Unknown");
+            pstmt.setString(2, playerName);
             pstmt.setDouble(3, 0.0);
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -99,11 +103,14 @@ public class DatabaseManager {
     }
 
     public void updateBalance(UUID uuid, String name, double newBalance) {
+        // FIX: Handle null names to prevent constraint violation
+        String playerName = name != null ? name : "Unknown";
+        
         String sql = "INSERT INTO players(uuid, last_known_name, balance) VALUES(?,?,?) " +
                 "ON CONFLICT(uuid) DO UPDATE SET balance = excluded.balance, last_known_name = excluded.last_known_name";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, uuid.toString());
-            pstmt.setString(2, name);
+            pstmt.setString(2, playerName);
             pstmt.setDouble(3, newBalance);
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -111,34 +118,8 @@ public class DatabaseManager {
         }
     }
 
-    public void setBalance(UUID uuid, double balance) {
-        String updateSql = "UPDATE players SET balance = ? WHERE uuid = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(updateSql)) {
-            pstmt.setDouble(1, balance);
-            pstmt.setString(2, uuid.toString());
-            int rowsUpdated = pstmt.executeUpdate();
-
-            if (rowsUpdated == 0) {
-                createPlayerAccountWithBalance(uuid, balance);
-            }
-        } catch (SQLException e) {
-            logger.severe("Error setting balance: " + e.getMessage());
-        }
-    }
-
-    private void createPlayerAccountWithBalance(UUID uuid, double balance) {
-        String sql = "INSERT INTO players(uuid, last_known_name, balance) VALUES(?,?,?)";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, uuid.toString());
-            pstmt.setString(2, "Unknown");
-            pstmt.setDouble(3, balance);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            logger.severe("Error creating player account during setBalance: " + e.getMessage());
-        }
-    }
     public Map<UUID, Double> getTopBalances(int limit) {
-        Map<UUID, Double> topBalances = new java.util.LinkedHashMap<>();
+        Map<UUID, Double> topBalances = new LinkedHashMap<>();
         String sql = "SELECT uuid, balance FROM players ORDER BY balance DESC LIMIT ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, limit);
@@ -165,5 +146,34 @@ public class DatabaseManager {
         } catch (Exception ignored) { }
 
         return null;
+    }
+
+    public void setBalance(UUID uuid, double balance) {
+        String updateSql = "UPDATE players SET balance = ? WHERE uuid = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(updateSql)) {
+            pstmt.setDouble(1, balance);
+            pstmt.setString(2, uuid.toString());
+            int rowsUpdated = pstmt.executeUpdate();
+
+            if (rowsUpdated == 0) {
+                createPlayerAccountWithBalance(uuid, balance);
+            }
+        } catch (SQLException e) {
+            logger.severe("Error setting balance: " + e.getMessage());
+        }
+    }
+
+    private void createPlayerAccountWithBalance(UUID uuid, double balance) {
+        // FIX: Handle null names
+        String playerName = "Unknown"; 
+        String sql = "INSERT INTO players(uuid, last_known_name, balance) VALUES(?,?,?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, uuid.toString());
+            pstmt.setString(2, playerName);
+            pstmt.setDouble(3, balance);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            logger.severe("Error creating player account during setBalance: " + e.getMessage());
+        }
     }
 }
