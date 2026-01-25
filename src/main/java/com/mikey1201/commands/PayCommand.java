@@ -1,36 +1,33 @@
 package com.mikey1201.commands;
 
-import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-
+import com.mikey1201.commands.abstracts.Command;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
 import com.mikey1201.utils.InputUtils;
-import com.mikey1201.utils.PlayerUtils;
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
-public class PayCommand implements CommandExecutor {
+public class PayCommand extends Command {
 
     private final EconomyProvider economy;
     private final MessageManager messages;
 
     public PayCommand(EconomyProvider economy, MessageManager messages) {
+        super(messages, null, true);
         this.economy = economy;
         this.messages = messages;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!PlayerUtils.isPlayer(sender, messages.get("errors.player-only"))) return true;
+    public boolean execute(CommandSender sender, String label, String[] args) {
         if (args.length != 2) {
             sender.sendMessage(messages.get("errors.usage-pay"));
             return true;
         }
 
         Player senderPlayer = (Player) sender;
-        
+
         Player target = Bukkit.getPlayer(args[0]);
         if (target == null || !target.isOnline()) {
             sender.sendMessage(messages.get("errors.player-not-found"));

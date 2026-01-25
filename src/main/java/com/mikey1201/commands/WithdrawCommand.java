@@ -1,8 +1,7 @@
 package com.mikey1201.commands;
 
+import com.mikey1201.commands.abstracts.Command;
 import org.bukkit.Material;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -11,26 +10,22 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
 import com.mikey1201.utils.InputUtils;
-import com.mikey1201.utils.PlayerUtils;
 
-public class WithdrawCommand implements CommandExecutor {
+public class WithdrawCommand extends Command {
 
     private final EconomyProvider economy;
     private final MessageManager messages;
     private final JavaPlugin plugin;
 
     public WithdrawCommand(EconomyProvider economy, MessageManager messages, JavaPlugin plugin) {
+        super(messages, null, true);
         this.economy = economy;
         this.messages = messages;
         this.plugin = plugin;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!PlayerUtils.isPlayer(sender, messages.get("errors.player-only"))) {
-            return true;
-        }
-        
+    public boolean execute(CommandSender sender, String label, String[] args) {
         if (args.length != 1) {
             sender.sendMessage(messages.get("errors.usage-amount", "{label}", label));
             return true;
@@ -38,10 +33,10 @@ public class WithdrawCommand implements CommandExecutor {
 
         Player player = (Player) sender;
         int amountToWithdraw;
-        
+
         Material currencyItem = getCurrencyMaterial();
         double currentBalance = economy.getBalance(player);
-        
+
         if (args[0].equalsIgnoreCase("all")) {
             amountToWithdraw = (int) Math.floor(currentBalance);
         } else {
@@ -57,9 +52,9 @@ public class WithdrawCommand implements CommandExecutor {
 
         if (amountToWithdraw == 0) {
             if (currentBalance < 1.0) {
-                 player.sendMessage(messages.get("withdraw.under-one", "{amount}", economy.format(currentBalance)));
+                player.sendMessage(messages.get("withdraw.under-one", "{amount}", economy.format(currentBalance)));
             } else {
-                 player.sendMessage(messages.get("errors.positive-number"));
+                player.sendMessage(messages.get("errors.positive-number"));
             }
             return true;
         }
@@ -73,7 +68,7 @@ public class WithdrawCommand implements CommandExecutor {
         int fullStacks = amountToWithdraw / maxStackSize;
         int remainder = amountToWithdraw % maxStackSize;
         int slotsNeeded = fullStacks + (remainder > 0 ? 1 : 0);
-        
+
         int emptySlots = 0;
         for (ItemStack item : player.getInventory().getStorageContents()) {
             if (item == null || item.getType().isAir()) {
@@ -101,7 +96,7 @@ public class WithdrawCommand implements CommandExecutor {
         player.sendMessage(messages.get("withdraw.new-balance", "{amount}", economy.format(economy.getBalance(player))));
         return true;
     }
-    
+
     private Material getCurrencyMaterial() {
         String configName = plugin.getConfig().getString("currency-item", "DIAMOND");
         Material material = Material.getMaterial(configName);

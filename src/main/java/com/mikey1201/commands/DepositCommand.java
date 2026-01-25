@@ -1,35 +1,30 @@
 package com.mikey1201.commands;
 
+import com.mikey1201.commands.abstracts.Command;
+import com.mikey1201.managers.MessageManager;
+import com.mikey1201.providers.EconomyProvider;
+import com.mikey1201.utils.InputUtils;
 import org.bukkit.Material;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.mikey1201.managers.MessageManager;
-import com.mikey1201.providers.EconomyProvider;
-import com.mikey1201.utils.InputUtils;
-
-public class DepositCommand implements CommandExecutor {
+public class DepositCommand extends Command {
 
     private final EconomyProvider economy;
     private final MessageManager messages;
     private final JavaPlugin plugin;
 
     public DepositCommand(EconomyProvider economy, MessageManager messages, JavaPlugin plugin) {
+        super(messages, null, true);
         this.economy = economy;
         this.messages = messages;
         this.plugin = plugin;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage(messages.get("errors.player-only"));
-            return true;
-        }
+    public boolean execute(CommandSender sender, String label, String[] args) {
         if (args.length != 1) {
             sender.sendMessage(messages.get("errors.usage-amount", "{label}", label));
             return true;
@@ -37,8 +32,7 @@ public class DepositCommand implements CommandExecutor {
 
         Player player = (Player) sender;
         int amountToDeposit;
-        
-        // Get material from config dynamically
+
         Material currencyItem = getCurrencyMaterial();
 
         if (args[0].equalsIgnoreCase("all")) {
@@ -46,10 +40,10 @@ public class DepositCommand implements CommandExecutor {
         } else {
             try {
                 double parsedAmount = InputUtils.parsePositiveDouble(args[0]);
-                InputUtils.checkWholeNumber(parsedAmount); // Throws error if fractional
+                InputUtils.checkWholeNumber(parsedAmount);
                 amountToDeposit = (int) parsedAmount;
             } catch (IllegalArgumentException e) {
-                player.sendMessage(messages.get("errors.invalid-number", "{input}", args[0])); 
+                player.sendMessage(messages.get("errors.invalid-number", "{input}", args[0]));
                 return true;
             }
         }
@@ -82,7 +76,7 @@ public class DepositCommand implements CommandExecutor {
         }
         return count;
     }
-    
+
     private Material getCurrencyMaterial() {
         String configName = plugin.getConfig().getString("currency-item", "DIAMOND");
         Material material = Material.getMaterial(configName);
