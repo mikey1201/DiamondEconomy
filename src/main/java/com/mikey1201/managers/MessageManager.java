@@ -7,7 +7,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class MessageManager {
+public class MessageManager implements Messages {
 
     private final JavaPlugin plugin;
     private FileConfiguration messagesConfig;

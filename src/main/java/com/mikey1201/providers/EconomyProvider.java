@@ -12,7 +12,7 @@ import com.mikey1201.managers.DatabaseManager;
 import net.milkbowl.vault.economy.AbstractEconomy;
 import net.milkbowl.vault.economy.EconomyResponse;
 
-public class EconomyProvider extends AbstractEconomy {
+public class EconomyProvider extends AbstractEconomy implements Economy {
 
     private final DatabaseManager database;
 

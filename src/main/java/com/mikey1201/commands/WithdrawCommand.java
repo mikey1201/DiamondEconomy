@@ -7,17 +7,17 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.mikey1201.managers.MessageManager;
-import com.mikey1201.providers.EconomyProvider;
+import com.mikey1201.managers.Messages;
+import com.mikey1201.providers.Economy;
 import com.mikey1201.utils.InputUtils;
 
 public class WithdrawCommand extends Command {
 
-    private final EconomyProvider economy;
-    private final MessageManager messages;
+    private final Economy economy;
+    private final Messages messages;
     private final JavaPlugin plugin;
 
-    public WithdrawCommand(EconomyProvider economy, MessageManager messages, JavaPlugin plugin) {
+    public WithdrawCommand(Economy economy, Messages messages, JavaPlugin plugin) {
         super(messages, null, true);
         this.economy = economy;
         this.messages = messages;

@@ -1,23 +1,23 @@
 package com.mikey1201.commands.abstracts;
 
-import com.mikey1201.managers.MessageManager;
+import com.mikey1201.managers.Messages;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public abstract class Command implements CommandExecutor {
 
-    private final MessageManager messages;
+    private final Messages messages;
     private final String permission;
     private final boolean playerOnly;
 
-    public Command(MessageManager messages, String permission, boolean playerOnly) {
+    public Command(Messages messages, String permission, boolean playerOnly) {
         this.messages = messages;
         this.permission = permission;
         this.playerOnly = playerOnly;
     }
 
-    public Command(MessageManager messages) {
+    public Command(Messages messages) {
         this(messages, null, false);
     }
 

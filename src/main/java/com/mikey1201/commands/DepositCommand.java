@@ -1,8 +1,8 @@
 package com.mikey1201.commands;
 
 import com.mikey1201.commands.abstracts.Command;
-import com.mikey1201.managers.MessageManager;
-import com.mikey1201.providers.EconomyProvider;
+import com.mikey1201.managers.Messages;
+import com.mikey1201.providers.Economy;
 import com.mikey1201.utils.InputUtils;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
@@ -12,11 +12,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class DepositCommand extends Command {
 
-    private final EconomyProvider economy;
-    private final MessageManager messages;
+    private final Economy economy;
+    private final Messages messages;
     private final JavaPlugin plugin;
 
-    public DepositCommand(EconomyProvider economy, MessageManager messages, JavaPlugin plugin) {
+    public DepositCommand(Economy economy, Messages messages, JavaPlugin plugin) {
         super(messages, null, true);
         this.economy = economy;
         this.messages = messages;

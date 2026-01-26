@@ -2,7 +2,7 @@ package com.mikey1201.commands.subcommands;
 
 import com.mikey1201.commands.abstracts.SubCommand;
 import com.mikey1201.managers.DatabaseManager;
-import com.mikey1201.managers.MessageManager;
+import com.mikey1201.managers.Messages;
 import com.mikey1201.utils.InputUtils;
 import com.mikey1201.utils.PlayerUtils;
 import org.bukkit.OfflinePlayer;
@@ -11,9 +11,9 @@ import org.bukkit.command.CommandSender;
 public class SetSubCommand extends SubCommand {
 
     private final DatabaseManager database;
-    private final MessageManager messages;
+    private final Messages messages;
 
-    public SetSubCommand(DatabaseManager database, MessageManager messages) {
+    public SetSubCommand(DatabaseManager database, Messages messages) {
         super("set", "Sets a player's balance.", "/eco set <player> <amount>");
         this.database = database;
         this.messages = messages;

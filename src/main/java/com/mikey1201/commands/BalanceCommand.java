@@ -1,8 +1,8 @@
 package com.mikey1201.commands;
 
 import com.mikey1201.commands.abstracts.Command;
-import com.mikey1201.managers.MessageManager;
-import com.mikey1201.providers.EconomyProvider;
+import com.mikey1201.managers.Messages;
+import com.mikey1201.providers.Economy;
 import com.mikey1201.utils.PlayerUtils;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -10,10 +10,10 @@ import org.bukkit.entity.Player;
 
 public class BalanceCommand extends Command {
 
-    private final EconomyProvider economy;
-    private final MessageManager messages;
+    private final Economy economy;
+    private final Messages messages;
 
-    public BalanceCommand(EconomyProvider economy, MessageManager messages) {
+    public BalanceCommand(Economy economy, Messages messages) {
         super(messages);
         this.economy = economy;
         this.messages = messages;

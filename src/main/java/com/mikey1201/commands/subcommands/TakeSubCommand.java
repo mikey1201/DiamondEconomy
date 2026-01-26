@@ -1,8 +1,8 @@
 package com.mikey1201.commands.subcommands;
 
 import com.mikey1201.commands.abstracts.SubCommand;
-import com.mikey1201.managers.MessageManager;
-import com.mikey1201.providers.EconomyProvider;
+import com.mikey1201.managers.Messages;
+import com.mikey1201.providers.Economy;
 import com.mikey1201.utils.InputUtils;
 import com.mikey1201.utils.PlayerUtils;
 import org.bukkit.OfflinePlayer;
@@ -10,10 +10,10 @@ import org.bukkit.command.CommandSender;
 
 public class TakeSubCommand extends SubCommand {
 
-    private final EconomyProvider economy;
-    private final MessageManager messages;
+    private final Economy economy;
+    private final Messages messages;
 
-    public TakeSubCommand(EconomyProvider economy, MessageManager messages) {
+    public TakeSubCommand(Economy economy, Messages messages) {
         super("take", "Takes money from a player.", "/eco take <player> <amount>");
         this.economy = economy;
         this.messages = messages;

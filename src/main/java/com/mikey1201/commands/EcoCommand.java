@@ -6,8 +6,8 @@ import com.mikey1201.commands.subcommands.GiveSubCommand;
 import com.mikey1201.commands.subcommands.SetSubCommand;
 import com.mikey1201.commands.subcommands.TakeSubCommand;
 import com.mikey1201.managers.DatabaseManager;
-import com.mikey1201.managers.MessageManager;
-import com.mikey1201.providers.EconomyProvider;
+import com.mikey1201.managers.Messages;
+import com.mikey1201.providers.Economy;
 import org.bukkit.command.CommandSender;
 
 import java.util.Arrays;
@@ -17,9 +17,9 @@ import java.util.Map;
 public class EcoCommand extends Command {
 
     private final Map<String, SubCommand> subCommands = new HashMap<>();
-    private final MessageManager messages;
+    private final Messages messages;
 
-    public EcoCommand(EconomyProvider economy, MessageManager messages, DatabaseManager database) {
+    public EcoCommand(Economy economy, Messages messages, DatabaseManager database) {
         super(messages, "diamondeconomy.admin", false);
         this.messages = messages;
         subCommands.put("give", new GiveSubCommand(economy, messages));
