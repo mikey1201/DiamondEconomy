@@ -40,9 +40,7 @@ public class EconomyProvider extends AbstractEconomy {
 
     @Override
     public boolean hasAccount(OfflinePlayer player) {
-        if (player == null || player.getUniqueId() == null) {
-            return false;
-        }
+        if (player == null) return false;
         return database.hasAccount(player.getUniqueId());
     }
 
@@ -79,6 +77,16 @@ public class EconomyProvider extends AbstractEconomy {
     }
 
     @Override
+    public double getBalance(OfflinePlayer player, String world) {
+        if (!hasAccount(player)) {
+            return 0.0;
+        }
+        return database.getBalance(player.getUniqueId());
+    }
+
+    @Override
+    public EconomyResponse withdrawPlayer(OfflinePlayer p, String w, double a) { return withdrawPlayer(p, a); }
+    @Override
     public EconomyResponse withdrawPlayer(String s, String s1, double v) { return withdrawPlayer(s, v); }
     @Override
     public EconomyResponse withdrawPlayer(String playerName, double amount) {
@@ -103,6 +111,8 @@ public class EconomyProvider extends AbstractEconomy {
         return new EconomyResponse(amount, newBalance, EconomyResponse.ResponseType.SUCCESS, null);
     }
 
+    @Override
+    public EconomyResponse depositPlayer(OfflinePlayer p, String w, double a) { return depositPlayer(p, a); }
     @Override
     public EconomyResponse depositPlayer(String s, String s1, double v) { return depositPlayer(s, v); }
     @Override
@@ -137,7 +147,7 @@ public class EconomyProvider extends AbstractEconomy {
 
     @Override
     public boolean createPlayerAccount(OfflinePlayer player) {
-        if (player == null || player.getUniqueId() == null) return false;
+        if (player == null) return false;
         if (hasAccount(player)) return false;
 
         database.createPlayerAccount(player);
