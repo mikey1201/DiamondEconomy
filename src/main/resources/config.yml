@@ -6,7 +6,7 @@ currency-item: DIAMOND
 currency-symbol: "⬧"
 
 # Check for new versions on startup? (Connects to GitHub)
-check-for-updates: true# The material to use as the physical currency item.
+check-for-updates: true
 
 # Send anonymous server stats to bStats for plugin improvements?
 # This is completely anonymous and helps me know which versions are popular.

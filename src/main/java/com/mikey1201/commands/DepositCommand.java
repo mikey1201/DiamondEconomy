@@ -65,7 +65,9 @@ public class DepositCommand implements CommandExecutor {
             return true;
         }
 
-        player.getInventory().removeItem(new ItemStack(currencyItem, amountToDeposit));
+        // FIX: Remove items by type only, ignoring metadata (e.g., renamed items in anvil)
+        // This prevents duplication exploits where renamed diamonds were counted but not removed
+        removeItemsByType(player, currencyItem, amountToDeposit);
         economy.depositPlayer(player, amountToDeposit);
 
         player.sendMessage(messages.get("deposit.success", "{amount}", String.valueOf(amountToDeposit)));
@@ -81,6 +83,34 @@ public class DepositCommand implements CommandExecutor {
             }
         }
         return count;
+    }
+
+    /**
+     * FIX: Removes items by type only, ignoring metadata (display names, enchantments, etc.)
+     * This fixes the issue where renamed diamonds in an anvil weren't being removed during deposit.
+     * @param player The player to remove items from
+     * @param material The material type to remove
+     * @param amount The total amount to remove
+     */
+    private void removeItemsByType(Player player, Material material, int amount) {
+        ItemStack[] contents = player.getInventory().getStorageContents();
+        int remaining = amount;
+
+        for (int i = 0; i < contents.length && remaining > 0; i++) {
+            ItemStack item = contents[i];
+            if (item != null && item.getType() == material) {
+                int itemAmount = item.getAmount();
+                if (itemAmount <= remaining) {
+                    // Remove the entire stack
+                    player.getInventory().setItem(i, null);
+                    remaining -= itemAmount;
+                } else {
+                    // Remove partial amount from the stack
+                    item.setAmount(itemAmount - remaining);
+                    remaining = 0;
+                }
+            }
+        }
     }
     
     private Material getCurrencyMaterial() {

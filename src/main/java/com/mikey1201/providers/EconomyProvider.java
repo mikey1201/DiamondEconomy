@@ -99,7 +99,9 @@ public class EconomyProvider extends AbstractEconomy {
         }
 
         double newBalance = getBalance(player) - amount;
-        database.updateBalance(player.getUniqueId(), player.getName(), newBalance);
+        // FIX: Handle null player names (e.g., Towny town/nation accounts)
+        String playerName = player.getName() != null ? player.getName() : "Unknown";
+        database.updateBalance(player.getUniqueId(), playerName, newBalance);
         return new EconomyResponse(amount, newBalance, EconomyResponse.ResponseType.SUCCESS, null);
     }
 
@@ -124,7 +126,9 @@ public class EconomyProvider extends AbstractEconomy {
         }
 
         double newBalance = getBalance(player) + amount;
-        database.updateBalance(player.getUniqueId(), player.getName(), newBalance);
+        // FIX: Handle null player names (e.g., Towny town/nation accounts)
+        String playerName = player.getName() != null ? player.getName() : "Unknown";
+        database.updateBalance(player.getUniqueId(), playerName, newBalance);
         return new EconomyResponse(amount, newBalance, EconomyResponse.ResponseType.SUCCESS, null);
     }
     @Override
@@ -159,7 +163,7 @@ public class EconomyProvider extends AbstractEconomy {
 
     @Override
     public String format(double amount) {
-        return String.format("%.2f %s", amount, amount == 1.0 ? currencyNameSingular() : currencyNamePlural());
+        return String.format("%.2f", amount);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.mikey1201.commands;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import com.mikey1201.managers.DatabaseManager;
+import com.mikey1201.managers.DatabaseManager.BalanceEntry;
 import com.mikey1201.managers.HiddenPlayersManager;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
@@ -53,7 +55,9 @@ public class BaltopCommand implements CommandExecutor {
             return true;
         }
 
-        Map<UUID, Double> potentialBalances = database.getTopBalances(15); 
+        // FIX: Use getTopBalancesWithNames to get stored names from database
+        // This properly displays names for non-player accounts (e.g., Towny towns/nations)
+        List<BalanceEntry> potentialBalances = database.getTopBalancesWithNames(15);
 
         if (potentialBalances.isEmpty()) {
             sender.sendMessage(messages.get("baltop.empty"));
@@ -63,19 +67,23 @@ public class BaltopCommand implements CommandExecutor {
         sender.sendMessage(messages.get("baltop.header"));
         
         int count = 0;
-        for (Map.Entry<UUID, Double> entry : potentialBalances.entrySet()) {
-            if (count >= 10) break; 
+        for (BalanceEntry entry : potentialBalances) {
+            if (count >= 10) break;
 
-            UUID uuid = entry.getKey();
+            UUID uuid = entry.getUuid();
 
             if (hiddenPlayersManager.isHidden(uuid)) {
                 continue;
             }
 
-            OfflinePlayer player = Bukkit.getOfflinePlayer(uuid);
-            double balance = entry.getValue();
+            // FIX: Use the stored name from the database instead of relying on OfflinePlayer.getName()
+            // OfflinePlayer.getName() returns null for non-player accounts like Towny towns/nations
+            String playerName = entry.getName();
+            if (playerName == null || playerName.isEmpty()) {
+                playerName = "Unknown";
+            }
             
-            String playerName = player.getName() != null ? player.getName() : "Unknown";
+            double balance = entry.getBalance();
             String formattedBalance = economy.format(balance);
             
             sender.sendMessage(messages.get("baltop.entry", 

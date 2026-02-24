@@ -7,7 +7,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -19,6 +21,26 @@ public class DatabaseManager {
     private final String dbPath;
     private Connection connection;
     private final Logger logger;
+
+    /**
+     * Simple record class to hold balance entry data for baltop display.
+     * Contains UUID, stored name, and balance.
+     */
+    public static class BalanceEntry {
+        private final UUID uuid;
+        private final String name;
+        private final double balance;
+
+        public BalanceEntry(UUID uuid, String name, double balance) {
+            this.uuid = uuid;
+            this.name = name;
+            this.balance = balance;
+        }
+
+        public UUID getUuid() { return uuid; }
+        public String getName() { return name; }
+        public double getBalance() { return balance; }
+    }
 
     public DatabaseManager(File dataFolder, Logger logger) {
         this.dbPath = "jdbc:sqlite:" + new File(dataFolder, "economy.db").getAbsolutePath();
@@ -130,6 +152,30 @@ public class DatabaseManager {
             }
         } catch (SQLException e) {
             logger.severe("Error getting top balances: " + e.getMessage());
+        }
+        return topBalances;
+    }
+
+    /**
+     * FIX: New method that returns top balances with names from the database.
+     * This allows proper display of names for non-player accounts (e.g., Towny towns/nations).
+     * @param limit Maximum number of entries to return
+     * @return List of BalanceEntry objects containing UUID, name, and balance
+     */
+    public List<BalanceEntry> getTopBalancesWithNames(int limit) {
+        List<BalanceEntry> topBalances = new ArrayList<>();
+        String sql = "SELECT uuid, last_known_name, balance FROM players ORDER BY balance DESC LIMIT ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, limit);
+            ResultSet rs = pstmt.executeQuery();
+            while(rs.next()) {
+                UUID uuid = UUID.fromString(rs.getString("uuid"));
+                String name = rs.getString("last_known_name");
+                double balance = rs.getDouble("balance");
+                topBalances.add(new BalanceEntry(uuid, name, balance));
+            }
+        } catch (SQLException e) {
+            logger.severe("Error getting top balances with names: " + e.getMessage());
         }
         return topBalances;
     }
