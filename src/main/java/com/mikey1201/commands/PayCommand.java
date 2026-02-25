@@ -1,44 +1,43 @@
 package com.mikey1201.commands;
 
-import org.bukkit.Bukkit;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import com.mikey1201.commands.abstracts.Command;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
 import com.mikey1201.utils.InputUtils;
 import com.mikey1201.utils.PlayerUtils;
 
-public class PayCommand implements CommandExecutor {
+public class PayCommand extends Command {
 
     private final EconomyProvider economy;
-    private final MessageManager messages;
 
     public PayCommand(EconomyProvider economy, MessageManager messages) {
+        super(messages, null, true);
         this.economy = economy;
-        this.messages = messages;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!PlayerUtils.isPlayer(sender, messages.get("errors.player-only"))) return true;
+    public boolean execute(CommandSender sender, String[] args) {
+        Player player = (Player) sender;
+
         if (args.length != 2) {
-            sender.sendMessage(messages.get("errors.usage-pay"));
+            sender.sendMessage(messages.get("pay.usage"));
             return true;
         }
 
-        Player senderPlayer = (Player) sender;
-        
-        Player target = Bukkit.getPlayer(args[0]);
-        if (target == null || !target.isOnline()) {
+        String targetName = args[0];
+        OfflinePlayer target = PlayerUtils.getOfflinePlayer(targetName);
+
+        if (target == null) {
             sender.sendMessage(messages.get("errors.player-not-found"));
             return true;
         }
 
-        if (target.equals(senderPlayer)) {
-            sender.sendMessage(messages.get("errors.pay-yourself"));
+        if (target.getUniqueId().equals(player.getUniqueId())) {
+            sender.sendMessage(messages.get("errors.pay-self"));
             return true;
         }
 
@@ -50,16 +49,19 @@ public class PayCommand implements CommandExecutor {
             return true;
         }
 
-        if (economy.getBalance(senderPlayer) < amount) {
+        if (economy.getBalance(player) < amount) {
             sender.sendMessage(messages.get("errors.insufficient-funds"));
             return true;
         }
 
-        economy.withdrawPlayer(senderPlayer, amount);
+        economy.withdrawPlayer(player, amount);
         economy.depositPlayer(target, amount);
 
-        senderPlayer.sendMessage(messages.get("pay.sent", "{amount}", String.valueOf(amount), "{player}", target.getName()));
-        target.sendMessage(messages.get("pay.received", "{amount}", String.valueOf(amount), "{player}", senderPlayer.getName()));
+        sender.sendMessage(messages.get("pay.success", "{amount}", String.valueOf(amount), "{player}", targetName));
+
+        if (target.isOnline()) {
+            ((Player) target).sendMessage(messages.get("pay.received", "{amount}", String.valueOf(amount), "{player}", player.getName()));
+        }
 
         return true;
     }

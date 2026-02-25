@@ -1,45 +1,30 @@
 package com.mikey1201.commands;
 
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 import com.mikey1201.DiamondEconomy;
+import com.mikey1201.commands.abstracts.Command;
 import com.mikey1201.managers.MessageManager;
 
-public class DiamondEconomyCommand implements CommandExecutor {
+public class DiamondEconomyCommand extends Command {
 
     private final DiamondEconomy plugin;
-    private final MessageManager messages;
 
     public DiamondEconomyCommand(DiamondEconomy plugin, MessageManager messages) {
+        super(messages, "diamondeconomy.admin", false);
         this.plugin = plugin;
-        this.messages = messages;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("diamondeconomy.admin")) {
-            sender.sendMessage(messages.get("errors.no-permission"));
-            return true;
-        }
-
-        if (args.length == 0) {
-            sender.sendMessage(ChatColor.GOLD + "DiamondEconomy version " + plugin.getDescription().getVersion());
-            return true;
-        }
-
-        if (args[0].equalsIgnoreCase("reload")) {
+    public boolean execute(CommandSender sender, String[] args) {
+        if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             plugin.reloadConfig();
-            
             messages.reloadConfig();
-            
-            sender.sendMessage(messages.get("reload.success"));
+            sender.sendMessage(messages.get("admin.reload-success"));
             return true;
         }
 
-        sender.sendMessage(messages.get("reload.success"));
+        sender.sendMessage(messages.get("admin.usage"));
         return true;
     }
 }
