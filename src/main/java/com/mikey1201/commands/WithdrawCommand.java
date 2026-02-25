@@ -1,113 +1,72 @@
 package com.mikey1201.commands;
 
 import org.bukkit.Material;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 
+import com.mikey1201.DiamondEconomy;
+import com.mikey1201.commands.abstracts.Command;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
 import com.mikey1201.utils.InputUtils;
-import com.mikey1201.utils.PlayerUtils;
 
-public class WithdrawCommand implements CommandExecutor {
+public class WithdrawCommand extends Command {
 
     private final EconomyProvider economy;
-    private final MessageManager messages;
-    private final JavaPlugin plugin;
+    private final DiamondEconomy plugin;
 
-    public WithdrawCommand(EconomyProvider economy, MessageManager messages, JavaPlugin plugin) {
+    public WithdrawCommand(EconomyProvider economy, MessageManager messages, DiamondEconomy plugin) {
+        super(messages, null, true);
         this.economy = economy;
-        this.messages = messages;
         this.plugin = plugin;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!PlayerUtils.isPlayer(sender, messages.get("errors.player-only"))) {
-            return true;
-        }
-        
-        if (args.length != 1) {
-            sender.sendMessage(messages.get("errors.usage-amount", "{label}", label));
-            return true;
-        }
-
+    public boolean execute(CommandSender sender, String[] args) {
         Player player = (Player) sender;
-        int amountToWithdraw;
-        
-        Material currencyItem = getCurrencyMaterial();
-        double currentBalance = economy.getBalance(player);
-        
-        if (args[0].equalsIgnoreCase("all")) {
-            amountToWithdraw = (int) Math.floor(currentBalance);
-        } else {
-            try {
-                double parsedAmount = InputUtils.parsePositiveDouble(args[0]);
-                InputUtils.checkWholeNumber(parsedAmount); // Throws error if fractional
-                amountToWithdraw = (int) parsedAmount;
-            } catch (IllegalArgumentException e) {
-                sender.sendMessage(messages.get("errors.invalid-number", "{input}", args[0]));
-                return true;
-            }
-        }
 
-        if (amountToWithdraw == 0) {
-            if (currentBalance < 1.0) {
-                 player.sendMessage(messages.get("withdraw.under-one", "{amount}", economy.format(currentBalance)));
-            } else {
-                 player.sendMessage(messages.get("errors.positive-number"));
-            }
+        if (args.length != 1) {
+            sender.sendMessage(messages.get("withdraw.usage"));
             return true;
         }
 
-        if (amountToWithdraw > currentBalance) {
-            player.sendMessage(messages.get("errors.insufficient-funds"));
+        double amount;
+        try {
+            amount = InputUtils.parsePositiveDouble(args[0]);
+        } catch (IllegalArgumentException e) {
+            sender.sendMessage(messages.get("errors.invalid-number", "{input}", args[0]));
             return true;
         }
 
-        int maxStackSize = currencyItem.getMaxStackSize();
-        int fullStacks = amountToWithdraw / maxStackSize;
-        int remainder = amountToWithdraw % maxStackSize;
-        int slotsNeeded = fullStacks + (remainder > 0 ? 1 : 0);
-        
-        int emptySlots = 0;
-        for (ItemStack item : player.getInventory().getStorageContents()) {
-            if (item == null || item.getType().isAir()) {
-                emptySlots++;
-            }
-        }
-
-        if (emptySlots < slotsNeeded) {
-            player.sendMessage(messages.get("errors.inventory-full"));
+        if (economy.getBalance(player) < amount) {
+            sender.sendMessage(messages.get("errors.insufficient-funds"));
             return true;
         }
 
-        economy.withdrawPlayer(player, amountToWithdraw);
+        Material currencyMat = getCurrencyMaterial();
+        ItemStack item = new ItemStack(currencyMat, (int) amount);
 
-        if (fullStacks > 0) {
-            for (int i = 0; i < fullStacks; i++) {
-                player.getInventory().addItem(new ItemStack(currencyItem, maxStackSize));
-            }
-        }
-        if (remainder > 0) {
-            player.getInventory().addItem(new ItemStack(currencyItem, remainder));
+        if (!hasInventorySpace(player, item)) {
+            sender.sendMessage(messages.get("errors.no-inventory-space"));
+            return true;
         }
 
-        player.sendMessage(messages.get("withdraw.success", "{amount}", String.valueOf(amountToWithdraw)));
-        player.sendMessage(messages.get("withdraw.new-balance", "{amount}", economy.format(economy.getBalance(player))));
+        economy.withdrawPlayer(player, amount);
+        player.getInventory().addItem(item);
+
+        sender.sendMessage(messages.get("withdraw.success", "{amount}", String.valueOf(amount)));
+
         return true;
     }
-    
+
     private Material getCurrencyMaterial() {
         String configName = plugin.getConfig().getString("currency-item", "DIAMOND");
         Material material = Material.getMaterial(configName);
-        if (material == null || !material.isItem()) {
-            return Material.DIAMOND;
-        }
-        return material;
+        return (material == null) ? Material.DIAMOND : material;
+    }
+
+    private boolean hasInventorySpace(Player player, ItemStack item) {
+        return player.getInventory().firstEmpty() != -1;
     }
 }

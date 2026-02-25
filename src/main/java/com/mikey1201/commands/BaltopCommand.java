@@ -1,38 +1,33 @@
 package com.mikey1201.commands;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import com.mikey1201.commands.abstracts.Command;
 import com.mikey1201.managers.DatabaseManager;
 import com.mikey1201.managers.DatabaseManager.BalanceEntry;
 import com.mikey1201.managers.HiddenPlayersManager;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
 
-public class BaltopCommand implements CommandExecutor {
+public class BaltopCommand extends Command {
 
     private final DatabaseManager database;
     private final EconomyProvider economy;
-    private final MessageManager messages;
     private final HiddenPlayersManager hiddenPlayersManager;
 
     public BaltopCommand(DatabaseManager database, EconomyProvider economy, MessageManager messages, HiddenPlayersManager hiddenPlayersManager) {
+        super(messages, null, false);
         this.database = database;
         this.economy = economy;
-        this.messages = messages;
         this.hiddenPlayersManager = hiddenPlayersManager;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean execute(CommandSender sender, String[] args) {
         
         if (args.length > 0 && args[0].equalsIgnoreCase("toggle")) {
             if (!sender.hasPermission("diamondeconomy.toggle")) {
@@ -55,8 +50,6 @@ public class BaltopCommand implements CommandExecutor {
             return true;
         }
 
-        // FIX: Use getTopBalancesWithNames to get stored names from database
-        // This properly displays names for non-player accounts (e.g., Towny towns/nations)
         List<BalanceEntry> potentialBalances = database.getTopBalancesWithNames(15);
 
         if (potentialBalances.isEmpty()) {
@@ -76,8 +69,6 @@ public class BaltopCommand implements CommandExecutor {
                 continue;
             }
 
-            // FIX: Use the stored name from the database instead of relying on OfflinePlayer.getName()
-            // OfflinePlayer.getName() returns null for non-player accounts like Towny towns/nations
             String playerName = entry.getName();
             if (playerName == null || playerName.isEmpty()) {
                 playerName = "Unknown";

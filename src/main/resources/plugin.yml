@@ -1,7 +1,7 @@
 name: DiamondEconomy
 version: 1.2.2
 main: com.mikey1201.DiamondEconomy
-api-version: 1.18
+api-version: 1.21
 author: mikey1201
 softdepend: [Vault]
 
@@ -10,34 +10,27 @@ commands:
     description: Check your balance or another player's balance.
     usage: /<command> [player]
     aliases: [bal]
-    class: com.mikey1201.commands.BalanceCommand
   deposit:
     description: Deposit physical currency items.
     usage: /<command> <amount|all>
     aliases: [depo]
-    class: com.mikey1201.commands.DepositCommand
   withdraw:
     description: Withdraw physical currency items.
     usage: /<command> <amount|all>
     aliases: [with]
-    class: com.mikey1201.commands.WithdrawCommand
   pay:
     description: Pay another player.
     usage: /<command> <player> <amount>
-    class: com.mikey1201.commands.PayCommand
   baltop:
     description: View the top balances.
     usage: /<command> [toggle]
-    class: com.mikey1201.commands.BaltopCommand
   eco:
     description: Manage the economy.
     usage: /<command> <give|take|set> <player> <amount>
-    class: com.mikey1201.commands.EcoCommand
   diamondeconomy:
     description: Main plugin command.
     usage: /<command> [reload]
     aliases: [de]
-    class: com.mikey1201.commands.DiamondEconomyCommand
 
 permissions:
   diamondeconomy.use:

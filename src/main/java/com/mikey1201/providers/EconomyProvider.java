@@ -20,39 +20,30 @@ public class EconomyProvider extends AbstractEconomy {
         this.database = database;
     }
 
-    private OfflinePlayer getRobustOfflinePlayer(String playerName) {
+    private OfflinePlayer resolvePlayer(String playerName) {
         Player onlinePlayer = Bukkit.getPlayer(playerName);
         if (onlinePlayer != null) {
             return onlinePlayer;
         }
 
         UUID uuid = database.getUUID(playerName);
-        if (uuid != null) {
-            return Bukkit.getOfflinePlayer(uuid);
-        }
-
-        return null;
+        return (uuid != null) ? Bukkit.getOfflinePlayer(uuid) : null;
     }
 
+    @Override
     public boolean hasAccount(String playerName) {
         return database.getUUID(playerName) != null;
     }
 
     @Override
     public boolean hasAccount(OfflinePlayer player) {
-        if (player == null) return false;
-        return database.hasAccount(player.getUniqueId());
+        return player != null && database.hasAccount(player.getUniqueId());
     }
 
     @Override
-    public boolean hasAccount(OfflinePlayer player, String worldName) {
-        return hasAccount(player);
-    }
-
+    public boolean hasAccount(OfflinePlayer player, String worldName) { return hasAccount(player); }
     @Override
-    public boolean hasAccount(String playerName, String world) {
-        return hasAccount(playerName);
-    }
+    public boolean hasAccount(String playerName, String world) { return hasAccount(playerName); }
 
     @Override
     public boolean has(String playerName, double amount) { return getBalance(playerName) >= amount; }
@@ -60,29 +51,22 @@ public class EconomyProvider extends AbstractEconomy {
     public boolean has(OfflinePlayer player, double amount) { return getBalance(player) >= amount; }
     @Override
     public boolean has(String s, String s1, double v) { return has(s, v); }
+
     @Override
     public double getBalance(String s, String s1) { return getBalance(s); }
     @Override
     public double getBalance(String playerName) {
-        OfflinePlayer player = getRobustOfflinePlayer(playerName);
+        OfflinePlayer player = resolvePlayer(playerName);
         return getBalance(player);
     }
 
     @Override
     public double getBalance(OfflinePlayer player) {
-        if (!hasAccount(player)) {
-            return 0.0;
-        }
-        return database.getBalance(player.getUniqueId());
+        return hasAccount(player) ? database.getBalance(player.getUniqueId()) : 0.0;
     }
 
     @Override
-    public double getBalance(OfflinePlayer player, String world) {
-        if (!hasAccount(player)) {
-            return 0.0;
-        }
-        return database.getBalance(player.getUniqueId());
-    }
+    public double getBalance(OfflinePlayer player, String world) { return getBalance(player); }
 
     @Override
     public EconomyResponse withdrawPlayer(OfflinePlayer p, String w, double a) { return withdrawPlayer(p, a); }
@@ -90,8 +74,7 @@ public class EconomyProvider extends AbstractEconomy {
     public EconomyResponse withdrawPlayer(String s, String s1, double v) { return withdrawPlayer(s, v); }
     @Override
     public EconomyResponse withdrawPlayer(String playerName, double amount) {
-        OfflinePlayer player = getRobustOfflinePlayer(playerName);
-        return withdrawPlayer(player, amount);
+        return withdrawPlayer(resolvePlayer(playerName), amount);
     }
 
     @Override
@@ -102,14 +85,14 @@ public class EconomyProvider extends AbstractEconomy {
         if (amount < 0) {
             return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Cannot withdraw a negative amount.");
         }
-        if (getBalance(player) < amount) {
+
+        double currentBalance = getBalance(player);
+        if (currentBalance < amount) {
             return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Insufficient funds.");
         }
 
-        double newBalance = getBalance(player) - amount;
-        // FIX: Handle null player names (e.g., Towny town/nation accounts)
-        String playerName = player.getName() != null ? player.getName() : "Unknown";
-        database.updateBalance(player.getUniqueId(), playerName, newBalance);
+        double newBalance = currentBalance - amount;
+        updateBalance(player, newBalance);
         return new EconomyResponse(amount, newBalance, EconomyResponse.ResponseType.SUCCESS, null);
     }
 
@@ -119,8 +102,7 @@ public class EconomyProvider extends AbstractEconomy {
     public EconomyResponse depositPlayer(String s, String s1, double v) { return depositPlayer(s, v); }
     @Override
     public EconomyResponse depositPlayer(String playerName, double amount) {
-        OfflinePlayer player = getRobustOfflinePlayer(playerName);
-        return depositPlayer(player, amount);
+        return depositPlayer(resolvePlayer(playerName), amount);
     }
 
     @Override
@@ -136,24 +118,25 @@ public class EconomyProvider extends AbstractEconomy {
         }
 
         double newBalance = getBalance(player) + amount;
-        // FIX: Handle null player names (e.g., Towny town/nation accounts)
-        String playerName = player.getName() != null ? player.getName() : "Unknown";
-        database.updateBalance(player.getUniqueId(), playerName, newBalance);
+        updateBalance(player, newBalance);
         return new EconomyResponse(amount, newBalance, EconomyResponse.ResponseType.SUCCESS, null);
     }
+
+    private void updateBalance(OfflinePlayer player, double newBalance) {
+        String playerName = player.getName() != null ? player.getName() : "Unknown";
+        database.updateBalance(player.getUniqueId(), playerName, newBalance);
+    }
+
     @Override
     public boolean createPlayerAccount(String s, String s1) { return createPlayerAccount(s); }
     @Override
     public boolean createPlayerAccount(String playerName) {
-        OfflinePlayer player = getRobustOfflinePlayer(playerName);
-        return createPlayerAccount(player);
+        return createPlayerAccount(resolvePlayer(playerName));
     }
 
     @Override
     public boolean createPlayerAccount(OfflinePlayer player) {
-        if (player == null) return false;
-        if (hasAccount(player)) return false;
-
+        if (player == null || hasAccount(player)) return false;
         database.createPlayerAccount(player);
         return true;
     }

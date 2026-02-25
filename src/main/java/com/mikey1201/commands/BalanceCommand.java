@@ -1,27 +1,25 @@
 package com.mikey1201.commands;
 
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import com.mikey1201.commands.abstracts.Command;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
 import com.mikey1201.utils.PlayerUtils;
 
-public class BalanceCommand implements CommandExecutor {
+public class BalanceCommand extends Command {
 
     private final EconomyProvider economy;
-    private final MessageManager messages;
 
     public BalanceCommand(EconomyProvider economy, MessageManager messages) {
+        super(messages, null, false);
         this.economy = economy;
-        this.messages = messages;
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean execute(CommandSender sender, String[] args) {
         OfflinePlayer target;
 
         if (args.length == 0) {

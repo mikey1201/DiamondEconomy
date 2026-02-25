@@ -51,7 +51,7 @@ public final class DiamondEconomy extends JavaPlugin {
         }
 
         economyProvider = new EconomyProvider(databaseManager);
-        VaultHook.hook(this, databaseManager, getLogger());
+        VaultHook.hook(this, economyProvider, getLogger());
     }
 
     @Override
