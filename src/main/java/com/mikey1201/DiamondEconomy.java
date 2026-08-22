@@ -30,6 +30,7 @@ public final class DiamondEconomy extends JavaPlugin {
     private EconomyProvider economyProvider;
     private MessageManager messageManager;
     private HiddenPlayersManager hiddenPlayersManager;
+    private boolean databaseInitFailed = false;
 
     private static final int BSTATS_ID = 29024;
 
@@ -45,7 +46,11 @@ public final class DiamondEconomy extends JavaPlugin {
             databaseManager.connect();
             databaseManager.initialize();
         } catch (SQLException e) {
-            getLogger().severe("Failed to initialize the database! The plugin may not function correctly.");
+            // FIX: remember the failure. Previously the null-check in
+            // onEnable passed (databaseManager was non-null) and the first
+            // economy operation threw a NullPointerException instead.
+            databaseInitFailed = true;
+            getLogger().severe("Failed to initialize the database! The plugin cannot function.");
             e.printStackTrace();
             return;
         }
@@ -56,7 +61,7 @@ public final class DiamondEconomy extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        if (databaseManager == null || economyProvider == null) {
+        if (databaseManager == null || economyProvider == null || databaseInitFailed) {
             getLogger().severe("Critical components failed to load in onLoad. Disabling plugin.");
             getServer().getPluginManager().disablePlugin(this);
             return;
@@ -79,7 +84,7 @@ public final class DiamondEconomy extends JavaPlugin {
 
         new UpdateChecker(this).checkForUpdates();
 
-        getServer().getPluginManager().registerEvents(new PlayerAccountListener(databaseManager), this);
+        getServer().getPluginManager().registerEvents(new PlayerAccountListener(databaseManager, getLogger()), this);
 
         getLogger().info("DiamondEconomy has been enabled!");
     }

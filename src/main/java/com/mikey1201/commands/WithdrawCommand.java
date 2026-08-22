@@ -1,5 +1,6 @@
 package com.mikey1201.commands;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -8,10 +9,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.mikey1201.managers.DatabaseException;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
 import com.mikey1201.utils.InputUtils;
 import com.mikey1201.utils.PlayerUtils;
+
+import net.milkbowl.vault.economy.EconomyResponse;
 
 public class WithdrawCommand implements CommandExecutor {
 
@@ -40,15 +44,24 @@ public class WithdrawCommand implements CommandExecutor {
         int amountToWithdraw;
         
         Material currencyItem = getCurrencyMaterial();
-        double currentBalance = economy.getBalance(player);
+        double currentBalance;
+        try {
+            currentBalance = economy.getBalance(player);
+        } catch (DatabaseException e) {
+            e.printStackTrace();
+            player.sendMessage(messages.get("errors.unknown-error"));
+            return true;
+        }
         
         if (args[0].equalsIgnoreCase("all")) {
+            // Note: the (int) cast saturates at Integer.MAX_VALUE for huge
+            // balances; the inventory-space check below rejects such amounts.
             amountToWithdraw = (int) Math.floor(currentBalance);
         } else {
             try {
-                double parsedAmount = InputUtils.parsePositiveDouble(args[0]);
-                InputUtils.checkWholeNumber(parsedAmount); // Throws error if fractional
-                amountToWithdraw = (int) parsedAmount;
+                // Strict whole-number parse: rejects fractional values, signs,
+                // scientific notation, NaN/Infinity, and int overflow.
+                amountToWithdraw = InputUtils.parsePositiveWholeInt(args[0]);
             } catch (IllegalArgumentException e) {
                 sender.sendMessage(messages.get("errors.invalid-number", "{input}", args[0]));
                 return true;
@@ -86,7 +99,21 @@ public class WithdrawCommand implements CommandExecutor {
             return true;
         }
 
-        economy.withdrawPlayer(player, amountToWithdraw);
+        // FIX: withdraw from the account FIRST and only give items if the
+        // withdrawal actually succeeded. Previously items were handed out
+        // even when the withdrawal failed, duplicating currency.
+        EconomyResponse response = economy.withdrawPlayer(player, amountToWithdraw);
+        if (response.type != EconomyResponse.ResponseType.SUCCESS) {
+            if (economy.failureWasDatabaseError(player, amountToWithdraw)) {
+                Bukkit.getLogger().warning("DiamondEconomy: /withdraw failed for " + player.getName() + ": " + response.errorMessage);
+                player.sendMessage(messages.get("errors.unknown-error"));
+            } else {
+                // Lost a race with another transaction (funds were sufficient
+                // when we checked a moment ago).
+                player.sendMessage(messages.get("errors.insufficient-funds"));
+            }
+            return true;
+        }
 
         if (fullStacks > 0) {
             for (int i = 0; i < fullStacks; i++) {
@@ -98,7 +125,7 @@ public class WithdrawCommand implements CommandExecutor {
         }
 
         player.sendMessage(messages.get("withdraw.success", "{amount}", String.valueOf(amountToWithdraw)));
-        player.sendMessage(messages.get("withdraw.new-balance", "{amount}", economy.format(economy.getBalance(player))));
+        player.sendMessage(messages.get("withdraw.new-balance", "{amount}", economy.format(response.balance)));
         return true;
     }
     

@@ -39,7 +39,8 @@ public class DiamondEconomyCommand implements CommandExecutor {
             return true;
         }
 
-        sender.sendMessage(messages.get("reload.success"));
+        // FIX: unknown subcommands used to report a successful reload.
+        sender.sendMessage(messages.get("usage-main", "{label}", label));
         return true;
     }
 }

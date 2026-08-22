@@ -11,6 +11,8 @@ import com.mikey1201.providers.EconomyProvider;
 import com.mikey1201.utils.InputUtils;
 import com.mikey1201.utils.PlayerUtils;
 
+import net.milkbowl.vault.economy.EconomyResponse;
+
 public class PayCommand implements CommandExecutor {
 
     private final EconomyProvider economy;
@@ -55,8 +57,31 @@ public class PayCommand implements CommandExecutor {
             return true;
         }
 
-        economy.withdrawPlayer(senderPlayer, amount);
-        economy.depositPlayer(target, amount);
+        // FIX: check responses and compensate if either half of the transfer
+        // fails, instead of always reporting success.
+        EconomyResponse withdrawResponse = economy.withdrawPlayer(senderPlayer, amount);
+        if (withdrawResponse.type != EconomyResponse.ResponseType.SUCCESS) {
+            if (economy.failureWasDatabaseError(senderPlayer, amount)) {
+                Bukkit.getLogger().warning("DiamondEconomy: /pay withdraw failed for " + senderPlayer.getName() + ": " + withdrawResponse.errorMessage);
+                senderPlayer.sendMessage(messages.get("errors.unknown-error"));
+            } else {
+                senderPlayer.sendMessage(messages.get("errors.insufficient-funds"));
+            }
+            return true;
+        }
+
+        EconomyResponse depositResponse = economy.depositPlayer(target, amount);
+        if (depositResponse.type != EconomyResponse.ResponseType.SUCCESS) {
+            // The withdrawal succeeded but the deposit did not: refund the
+            // sender so money cannot vanish into a failed deposit.
+            Bukkit.getLogger().warning("DiamondEconomy: /pay deposit failed for " + target.getName() + " (refunding " + senderPlayer.getName() + "): " + depositResponse.errorMessage);
+            EconomyResponse refundResponse = economy.depositPlayer(senderPlayer, amount);
+            if (refundResponse.type != EconomyResponse.ResponseType.SUCCESS) {
+                Bukkit.getLogger().severe("DiamondEconomy: CRITICAL - refund failed for " + senderPlayer.getName() + ", amount " + amount + ". Manual intervention required.");
+            }
+            senderPlayer.sendMessage(messages.get("errors.unknown-error"));
+            return true;
+        }
 
         senderPlayer.sendMessage(messages.get("pay.sent", "{amount}", String.valueOf(amount), "{player}", target.getName()));
         target.sendMessage(messages.get("pay.received", "{amount}", String.valueOf(amount), "{player}", senderPlayer.getName()));

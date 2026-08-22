@@ -14,6 +14,7 @@ errors:
   pay-yourself: "&cYou cannot pay yourself."
   usage-pay: "&cUsage: /pay <player> <amount>"
   usage-amount: "&cUsage: /{label} <amount|all>"
+  usage-main: "&cUsage: /{label} [reload]"
   unknown-error: "&cAn unknown error occurred."
 
 balance:

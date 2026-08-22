@@ -1,5 +1,6 @@
 package com.mikey1201.commands;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -11,6 +12,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
 import com.mikey1201.utils.InputUtils;
+
+import net.milkbowl.vault.economy.EconomyResponse;
 
 public class DepositCommand implements CommandExecutor {
 
@@ -45,9 +48,9 @@ public class DepositCommand implements CommandExecutor {
             amountToDeposit = getCurrencyCount(player, currencyItem);
         } else {
             try {
-                double parsedAmount = InputUtils.parsePositiveDouble(args[0]);
-                InputUtils.checkWholeNumber(parsedAmount); // Throws error if fractional
-                amountToDeposit = (int) parsedAmount;
+                // Strict whole-number parse: rejects fractional values, signs,
+                // scientific notation, NaN/Infinity, and int overflow.
+                amountToDeposit = InputUtils.parsePositiveWholeInt(args[0]);
             } catch (IllegalArgumentException e) {
                 player.sendMessage(messages.get("errors.invalid-number", "{input}", args[0])); 
                 return true;
@@ -65,13 +68,24 @@ public class DepositCommand implements CommandExecutor {
             return true;
         }
 
-        // FIX: Remove items by type only, ignoring metadata (e.g., renamed items in anvil)
-        // This prevents duplication exploits where renamed diamonds were counted but not removed
+        // FIX: credit the account FIRST and only remove items from the
+        // inventory if the deposit actually succeeded. Previously items were
+        // removed before the deposit, so a failed database write silently
+        // destroyed the deposited items.
+        EconomyResponse response = economy.depositPlayer(player, amountToDeposit);
+        if (response.type != EconomyResponse.ResponseType.SUCCESS) {
+            Bukkit.getLogger().warning("DiamondEconomy: /deposit failed for " + player.getName() + ": " + response.errorMessage);
+            player.sendMessage(messages.get("errors.unknown-error"));
+            return true;
+        }
+
+        // Items are removed only after the balance was credited. The count
+        // check above and this removal run synchronously on the main thread,
+        // so the inventory cannot change in between.
         removeItemsByType(player, currencyItem, amountToDeposit);
-        economy.depositPlayer(player, amountToDeposit);
 
         player.sendMessage(messages.get("deposit.success", "{amount}", String.valueOf(amountToDeposit)));
-        player.sendMessage(messages.get("deposit.new-balance", "{amount}", economy.format(economy.getBalance(player))));
+        player.sendMessage(messages.get("deposit.new-balance", "{amount}", economy.format(response.balance)));
         return true;
     }
 
@@ -86,7 +100,7 @@ public class DepositCommand implements CommandExecutor {
     }
 
     /**
-     * FIX: Removes items by type only, ignoring metadata (display names, enchantments, etc.)
+     * Removes items by type only, ignoring metadata (display names, enchantments, etc.)
      * This fixes the issue where renamed diamonds in an anvil weren't being removed during deposit.
      * @param player The player to remove items from
      * @param material The material type to remove

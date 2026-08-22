@@ -1,11 +1,13 @@
 package com.mikey1201.commands;
 
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import com.mikey1201.managers.DatabaseException;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
 import com.mikey1201.utils.PlayerUtils;
@@ -42,7 +44,14 @@ public class BalanceCommand implements CommandExecutor {
             }
         }
 
-        double balance = economy.getBalance(target);
+        double balance;
+        try {
+            balance = economy.getBalance(target);
+        } catch (DatabaseException e) {
+            Bukkit.getLogger().warning("DiamondEconomy: /balance failed for " + target.getName() + ": " + e.getMessage());
+            sender.sendMessage(messages.get("errors.unknown-error"));
+            return true;
+        }
         String formattedBalance = economy.format(balance);
         String playerName = target.getName() != null ? target.getName() : "Unknown";
 

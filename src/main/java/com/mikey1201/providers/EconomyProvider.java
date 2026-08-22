@@ -1,12 +1,15 @@
 package com.mikey1201.providers;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
+import com.mikey1201.managers.DatabaseException;
 import com.mikey1201.managers.DatabaseManager;
 
 import net.milkbowl.vault.economy.AbstractEconomy;
@@ -90,27 +93,41 @@ public class EconomyProvider extends AbstractEconomy {
     public EconomyResponse withdrawPlayer(String s, String s1, double v) { return withdrawPlayer(s, v); }
     @Override
     public EconomyResponse withdrawPlayer(String playerName, double amount) {
-        OfflinePlayer player = getRobustOfflinePlayer(playerName);
+        OfflinePlayer player;
+        try {
+            player = getRobustOfflinePlayer(playerName);
+        } catch (DatabaseException e) {
+            return databaseErrorResponse(e);
+        }
         return withdrawPlayer(player, amount);
     }
 
     @Override
     public EconomyResponse withdrawPlayer(OfflinePlayer player, double amount) {
-        if (!hasAccount(player)) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Account doesn't exist.");
+        if (player == null) {
+            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Player does not exist.");
+        }
+        if (!isValidAmount(amount)) {
+            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Cannot withdraw a non-finite amount.");
         }
         if (amount < 0) {
             return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Cannot withdraw a negative amount.");
         }
-        if (getBalance(player) < amount) {
-            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Insufficient funds.");
-        }
 
-        double newBalance = getBalance(player) - amount;
-        // FIX: Handle null player names (e.g., Towny town/nation accounts)
-        String playerName = player.getName() != null ? player.getName() : "Unknown";
-        database.updateBalance(player.getUniqueId(), playerName, newBalance);
-        return new EconomyResponse(amount, newBalance, EconomyResponse.ResponseType.SUCCESS, null);
+        try {
+            if (!hasAccount(player)) {
+                return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Account doesn't exist.");
+            }
+            // Atomic funds check + write: two concurrent withdrawals can never
+            // both pass and overdraw the account.
+            Double newBalance = database.tryWithdraw(player.getUniqueId(), amount);
+            if (newBalance == null) {
+                return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Insufficient funds.");
+            }
+            return new EconomyResponse(amount, newBalance, EconomyResponse.ResponseType.SUCCESS, null);
+        } catch (DatabaseException e) {
+            return databaseErrorResponse(e);
+        }
     }
 
     @Override
@@ -119,7 +136,12 @@ public class EconomyProvider extends AbstractEconomy {
     public EconomyResponse depositPlayer(String s, String s1, double v) { return depositPlayer(s, v); }
     @Override
     public EconomyResponse depositPlayer(String playerName, double amount) {
-        OfflinePlayer player = getRobustOfflinePlayer(playerName);
+        OfflinePlayer player;
+        try {
+            player = getRobustOfflinePlayer(playerName);
+        } catch (DatabaseException e) {
+            return databaseErrorResponse(e);
+        }
         return depositPlayer(player, amount);
     }
 
@@ -128,24 +150,61 @@ public class EconomyProvider extends AbstractEconomy {
         if (player == null) {
             return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Player does not exist.");
         }
-        if (!hasAccount(player)) {
-            createPlayerAccount(player);
+        if (!isValidAmount(amount)) {
+            return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Cannot deposit a non-finite amount.");
         }
         if (amount < 0) {
             return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Cannot deposit a negative amount.");
         }
 
-        double newBalance = getBalance(player) + amount;
-        // FIX: Handle null player names (e.g., Towny town/nation accounts)
-        String playerName = player.getName() != null ? player.getName() : "Unknown";
-        database.updateBalance(player.getUniqueId(), playerName, newBalance);
-        return new EconomyResponse(amount, newBalance, EconomyResponse.ResponseType.SUCCESS, null);
+        try {
+            if (!hasAccount(player)) {
+                createPlayerAccount(player);
+            }
+            // Atomic increment: no read-modify-write race between concurrent deposits.
+            double newBalance = database.addToBalance(player.getUniqueId(), playerName(player), amount);
+            return new EconomyResponse(amount, newBalance, EconomyResponse.ResponseType.SUCCESS, null);
+        } catch (DatabaseException e) {
+            return databaseErrorResponse(e);
+        }
     }
+
+    private static EconomyResponse databaseErrorResponse(DatabaseException e) {
+        return new EconomyResponse(0, 0, EconomyResponse.ResponseType.FAILURE, "Database error: " + e.getMessage());
+    }
+
+    private static boolean isValidAmount(double amount) {
+        return !Double.isNaN(amount) && !Double.isInfinite(amount);
+    }
+
+    private static String playerName(OfflinePlayer player) {
+        // Handle null player names (e.g., Towny town/nation accounts)
+        return player.getName() != null ? player.getName() : "Unknown";
+    }
+
+    /**
+     * Classifies a failed withdrawal for user-facing messaging: if the player
+     * can currently afford the amount, the failure must have been a database
+     * error rather than insufficient funds (e.g. a lost race).
+     */
+    public boolean failureWasDatabaseError(OfflinePlayer player, double amount) {
+        try {
+            return getBalance(player) >= amount;
+        } catch (DatabaseException e) {
+            return true;
+        }
+    }
+
     @Override
     public boolean createPlayerAccount(String s, String s1) { return createPlayerAccount(s); }
     @Override
     public boolean createPlayerAccount(String playerName) {
-        OfflinePlayer player = getRobustOfflinePlayer(playerName);
+        OfflinePlayer player;
+        try {
+            player = getRobustOfflinePlayer(playerName);
+        } catch (DatabaseException e) {
+            return false;
+        }
         return createPlayerAccount(player);
     }
 
@@ -154,8 +213,12 @@ public class EconomyProvider extends AbstractEconomy {
         if (player == null) return false;
         if (hasAccount(player)) return false;
 
-        database.createPlayerAccount(player);
-        return true;
+        try {
+            database.createPlayerAccount(player);
+            return true;
+        } catch (DatabaseException e) {
+            return false;
+        }
     }
 
     @Override
@@ -173,7 +236,8 @@ public class EconomyProvider extends AbstractEconomy {
 
     @Override
     public String format(double amount) {
-        return String.format("%.2f", amount);
+        // Locale.ROOT: always produce '1.50', never '1,50' on e.g. German servers
+        return String.format(Locale.ROOT, "%.2f", amount);
     }
 
     @Override
@@ -193,5 +257,5 @@ public class EconomyProvider extends AbstractEconomy {
     @Override
     public EconomyResponse isBankMember(String n, String p) { return new EconomyResponse(0,0,EconomyResponse.ResponseType.NOT_IMPLEMENTED, "Bank support is not enabled.");}
     @Override
-    public List<String> getBanks() { return null; }
+    public List<String> getBanks() { return Collections.emptyList(); }
 }
