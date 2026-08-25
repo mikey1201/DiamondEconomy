@@ -12,6 +12,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.mikey1201.managers.DatabaseException;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
+import com.mikey1201.utils.CurrencyUtils;
 import com.mikey1201.utils.InputUtils;
 import com.mikey1201.utils.PlayerUtils;
 
@@ -43,7 +44,7 @@ public class WithdrawCommand implements CommandExecutor {
         Player player = (Player) sender;
         int amountToWithdraw;
         
-        Material currencyItem = getCurrencyMaterial();
+        Material currencyItem = CurrencyUtils.getCurrencyMaterial(plugin);
         double currentBalance;
         try {
             currentBalance = economy.getBalance(player);
@@ -127,14 +128,5 @@ public class WithdrawCommand implements CommandExecutor {
         player.sendMessage(messages.get("withdraw.success", "{amount}", String.valueOf(amountToWithdraw)));
         player.sendMessage(messages.get("withdraw.new-balance", "{amount}", economy.format(response.balance)));
         return true;
-    }
-    
-    private Material getCurrencyMaterial() {
-        String configName = plugin.getConfig().getString("currency-item", "DIAMOND");
-        Material material = Material.getMaterial(configName);
-        if (material == null || !material.isItem()) {
-            return Material.DIAMOND;
-        }
-        return material;
     }
 }

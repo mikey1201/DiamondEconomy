@@ -11,6 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
+import com.mikey1201.utils.CurrencyUtils;
 import com.mikey1201.utils.InputUtils;
 
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -42,7 +43,7 @@ public class DepositCommand implements CommandExecutor {
         int amountToDeposit;
         
         // Get material from config dynamically
-        Material currencyItem = getCurrencyMaterial();
+        Material currencyItem = CurrencyUtils.getCurrencyMaterial(plugin);
 
         if (args[0].equalsIgnoreCase("all")) {
             amountToDeposit = getCurrencyCount(player, currencyItem);
@@ -125,14 +126,5 @@ public class DepositCommand implements CommandExecutor {
                 }
             }
         }
-    }
-    
-    private Material getCurrencyMaterial() {
-        String configName = plugin.getConfig().getString("currency-item", "DIAMOND");
-        Material material = Material.getMaterial(configName);
-        if (material == null || !material.isItem()) {
-            return Material.DIAMOND;
-        }
-        return material;
     }
 }

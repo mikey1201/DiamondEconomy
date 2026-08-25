@@ -22,6 +22,7 @@ import com.mikey1201.managers.HiddenPlayersManager;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
 import com.mikey1201.utils.CommandTabCompleter;
+import com.mikey1201.utils.CurrencyUtils;
 import com.mikey1201.utils.UpdateChecker;
 
 public class DiamondEconomy extends JavaPlugin {
@@ -56,7 +57,7 @@ public class DiamondEconomy extends JavaPlugin {
         }
 
         economyProvider = new EconomyProvider(databaseManager);
-        VaultHook.hook(this, databaseManager, getLogger());
+        VaultHook.hook(this, economyProvider, getLogger());
     }
 
     @Override
@@ -91,21 +92,10 @@ public class DiamondEconomy extends JavaPlugin {
 
     private void addBStatsCharts(Metrics metrics) {
         metrics.addCustomChart(new SimplePie("used_item", () -> {
-            Material mat = getCurrencyMaterial();
+            Material mat = CurrencyUtils.getCurrencyMaterial(this);
             String matName = (mat == null) ? "NULL_MATERIAL" : mat.name();
             return matName;
         }));
-    }
-
-    private Material getCurrencyMaterial() {
-        String configName = getConfig().getString("currency-item", "DIAMOND");
-        Material material = Material.getMaterial(configName);
-
-        if (material == null || !material.isItem()) {
-            getLogger().warning("Invalid material '" + configName + "' in config.yml. Defaulting to DIAMOND.");
-            return Material.DIAMOND;
-        }
-        return material;
     }
 
     private void registerCommands() {

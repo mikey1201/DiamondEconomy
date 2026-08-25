@@ -1,10 +1,14 @@
 package com.mikey1201;
 
+import java.io.File;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.NoSuchElementException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -400,5 +404,26 @@ class DiamondEconomyPluginTest {
         List<String> msgs = run(alice, "de garbage");
         assertReceived(msgs, "Usage");
         assertNotReceived(msgs, "reloaded");
+    }
+
+    @Test
+    void missingUserMessageKeyFallsBackToBundledDefault() throws Exception {
+        // Regression test: keys added by plugin updates used to show
+        // "Missing message: ..." for existing installs. The user's file here
+        // loses a key; the bundled default must be served after a reload.
+        File messagesFile = new File(plugin.getDataFolder(), "messages.yml");
+        List<String> lines = Files.readAllLines(messagesFile.toPath(), StandardCharsets.UTF_8);
+        List<String> filtered = lines.stream()
+                .filter(line -> !line.trim().startsWith("zero-deposit:"))
+                .collect(Collectors.toList());
+        Files.write(messagesFile.toPath(), filtered, StandardCharsets.UTF_8);
+
+        alice.setOp(true);
+        assertReceived(run(alice, "de reload"), "reloaded");
+
+        // Empty inventory: /deposit all hits errors.zero-deposit
+        List<String> msgs = run(alice, "deposit all");
+        assertReceived(msgs, "You have no diamond to deposit.");
+        assertNotReceived(msgs, "Missing message");
     }
 }

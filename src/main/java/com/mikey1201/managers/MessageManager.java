@@ -1,6 +1,10 @@
 package com.mikey1201.managers;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -21,7 +25,7 @@ public class MessageManager {
         this.currencySymbol = plugin.getConfig().getString("currency-symbol", "⬧");
         loadMessages();
     }
-    
+
     public void reloadConfig() {
         this.currencySymbol = plugin.getConfig().getString("currency-symbol", "⬧");
         loadMessages();
@@ -32,6 +36,18 @@ public class MessageManager {
             plugin.saveResource("messages.yml", false);
         }
         messagesConfig = YamlConfiguration.loadConfiguration(messagesFile);
+
+        // Fall back to the bundled messages.yml for any keys missing from the
+        // user's file (e.g. keys added by a plugin update), so upgraded
+        // installs never see "Missing message: ..." placeholders.
+        try (InputStream bundled = plugin.getResource("messages.yml")) {
+            if (bundled != null) {
+                messagesConfig.setDefaults(YamlConfiguration.loadConfiguration(
+                        new InputStreamReader(bundled, StandardCharsets.UTF_8)));
+            }
+        } catch (IOException e) {
+            plugin.getLogger().warning("Could not load bundled message defaults: " + e.getMessage());
+        }
     }
 
     public String get(String path, String... replacements) {

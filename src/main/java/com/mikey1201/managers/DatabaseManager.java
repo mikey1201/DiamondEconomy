@@ -95,6 +95,10 @@ public class DatabaseManager {
                     "last_known_name TEXT NOT NULL DEFAULT 'Unknown'," +
                     "balance REAL NOT NULL DEFAULT 0.0" +
                     ");");
+            // Case-insensitive name lookups (Vault name-based calls) use this
+            // index instead of scanning the whole table.
+            statement.execute("CREATE INDEX IF NOT EXISTS idx_players_last_known_name " +
+                    "ON players(last_known_name COLLATE NOCASE);");
             logger.info("Database table initialized.");
         }
     }
