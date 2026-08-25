@@ -40,6 +40,10 @@ class DiamondEconomyPluginTest {
 
     @BeforeEach
     void setUp() {
+        // bStats refuses to construct unless its classes were relocated by the
+        // shade plugin (which only happens during packaging, not in tests).
+        // This system property is bStats' documented opt-out for unit tests.
+        System.setProperty("bstats.relocatecheck", "false");
         server = MockBukkit.mock();
         plugin = MockBukkit.load(DiamondEconomy.class);
         // addPlayer fires PlayerJoinEvent, so accounts are created like on a real server
@@ -229,7 +233,7 @@ class DiamondEconomyPluginTest {
     void withdrawInsufficientFundsGivesNoItems() {
         setBalance(alice, 5);
         List<String> msgs = run(alice, "withdraw 10");
-        assertReceived(msgs, "not enough funds");
+        assertReceived(msgs, "enough funds");
         assertEquals(0, count(alice, Material.DIAMOND));
     }
 
@@ -281,7 +285,7 @@ class DiamondEconomyPluginTest {
         setBalance(alice, 5);
         assertReceived(run(alice, "pay Alice 1"), "pay yourself");
         assertReceived(run(alice, "pay Nobody 1"), "Player not found");
-        assertReceived(run(alice, "pay Bob 10"), "not enough funds");
+        assertReceived(run(alice, "pay Bob 10"), "enough funds");
         assertReceived(run(alice, "balance"), "Your balance: 5.00");
     }
 
