@@ -24,7 +24,7 @@ import com.mikey1201.providers.EconomyProvider;
 import com.mikey1201.utils.CommandTabCompleter;
 import com.mikey1201.utils.UpdateChecker;
 
-public final class DiamondEconomy extends JavaPlugin {
+public class DiamondEconomy extends JavaPlugin {
 
     private DatabaseManager databaseManager;
     private EconomyProvider economyProvider;

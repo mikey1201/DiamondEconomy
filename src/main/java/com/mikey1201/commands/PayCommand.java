@@ -6,6 +6,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import com.mikey1201.managers.DatabaseException;
 import com.mikey1201.managers.MessageManager;
 import com.mikey1201.providers.EconomyProvider;
 import com.mikey1201.utils.InputUtils;
@@ -52,7 +53,15 @@ public class PayCommand implements CommandExecutor {
             return true;
         }
 
-        if (economy.getBalance(senderPlayer) < amount) {
+        double senderBalance;
+        try {
+            senderBalance = economy.getBalance(senderPlayer);
+        } catch (DatabaseException e) {
+            Bukkit.getLogger().warning("DiamondEconomy: /pay balance check failed for " + senderPlayer.getName() + ": " + e.getMessage());
+            senderPlayer.sendMessage(messages.get("errors.unknown-error"));
+            return true;
+        }
+        if (senderBalance < amount) {
             sender.sendMessage(messages.get("errors.insufficient-funds"));
             return true;
         }
