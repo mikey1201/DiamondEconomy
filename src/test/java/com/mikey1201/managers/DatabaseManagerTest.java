@@ -156,10 +156,22 @@ class DatabaseManagerTest {
         db.addToBalance(towny, null, 8.0);
         assertEquals(50.0, db.getBalance(towny));
 
-        // Providing a name later must not clobber the balance
-        db.addToBalance(towny, "Town-Something", 0.0);
+        // Regression: balance changes must never rename an account (synthetic
+        // names from UUID-based OfflinePlayer lookups used to clobber Towny
+        // town/nation names via Vault deposits).
+        db.updateBalance(towny, "Town-Something", 50.0);
         assertEquals(50.0, db.getBalance(towny));
         assertEquals(towny, db.getUUID("Town-Something"));
+
+        db.addToBalance(towny, null, 1.0);
+        assertEquals(towny, db.getUUID("Town-Something"), "null-name increment must preserve the stored name");
+        db.addToBalance(towny, "SomeSyntheticName", 1.0);
+        assertEquals(towny, db.getUUID("Town-Something"), "named increment must not rename an existing account");
+        assertEquals(52.0, db.getBalance(towny));
+
+        db.updateBalance(towny, null, 3.0);
+        assertEquals(towny, db.getUUID("Town-Something"), "null-name update must preserve the stored name");
+        assertEquals(3.0, db.getBalance(towny));
     }
 
     @Test

@@ -42,7 +42,7 @@ public class EcoCommand implements CommandExecutor {
         String action = args[0].toLowerCase();
         String targetName = args[1];
         
-        OfflinePlayer target = PlayerUtils.getOfflinePlayer(targetName);
+        OfflinePlayer target = PlayerUtils.getOfflinePlayer(targetName, database);
         if (target == null) {
             sender.sendMessage(messages.get("errors.player-not-found"));
             return true;

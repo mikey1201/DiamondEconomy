@@ -1,11 +1,13 @@
 name: DiamondEconomy
-version: 1.2.2
+version: ${project.version}
 main: com.mikey1201.DiamondEconomy
 api-version: 1.18
 author: mikey1201
 softdepend: [Vault]
 
 commands:
+  # /balance intentionally has no command-level permission: everyone may check
+  # their own balance; checking others is gated in code by balance.others.
   balance:
     description: Check your balance or another player's balance.
     usage: /<command> [player]
@@ -14,23 +16,30 @@ commands:
     description: Deposit physical currency items.
     usage: /<command> <amount|all>
     aliases: [depo]
+    permission: diamondeconomy.use
   withdraw:
     description: Withdraw physical currency items.
     usage: /<command> <amount|all>
     aliases: [with]
+    permission: diamondeconomy.use
   pay:
     description: Pay another player.
     usage: /<command> <player> <amount>
+    permission: diamondeconomy.use
   baltop:
     description: View the top balances.
     usage: /<command> [toggle]
+    aliases: [balancetop]
+    permission: diamondeconomy.use
   eco:
     description: Manage the economy.
     usage: /<command> <give|take|set> <player> <amount>
+    permission: diamondeconomy.admin
   diamondeconomy:
     description: Main plugin command.
     usage: /<command> [reload]
     aliases: [de]
+    permission: diamondeconomy.admin
 
 permissions:
   diamondeconomy.use:

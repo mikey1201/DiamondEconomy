@@ -168,16 +168,25 @@ public class DatabaseManager {
 
     /**
      * Atomically sets the balance to an absolute value and refreshes the stored
-     * name (keeping any existing name when {@code name} is null).
+     * name. When {@code name} is null (e.g. Towny town/nation accounts), any
+     * existing stored name is preserved rather than being replaced.
      */
     public void updateBalance(UUID uuid, String name, double newBalance) {
-        String sql = "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, COALESCE(?, 'Unknown'), ?) " +
-                "ON CONFLICT(uuid) DO UPDATE SET balance = excluded.balance, " +
-                "last_known_name = COALESCE(excluded.last_known_name, players.last_known_name)";
+        // Null names must not clobber the stored name on conflict, so the
+        // conflict clause simply omits the name column in that case.
+        String sql = (name != null)
+                ? "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, ?, ?) " +
+                  "ON CONFLICT(uuid) DO UPDATE SET balance = excluded.balance, last_known_name = excluded.last_known_name"
+                : "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, 'Unknown', ?) " +
+                  "ON CONFLICT(uuid) DO UPDATE SET balance = excluded.balance";
         try (PreparedStatement pstmt = conn().prepareStatement(sql)) {
             pstmt.setString(1, uuid.toString());
-            pstmt.setString(2, name);
-            pstmt.setDouble(3, newBalance);
+            if (name != null) {
+                pstmt.setString(2, name);
+                pstmt.setDouble(3, newBalance);
+            } else {
+                pstmt.setDouble(2, newBalance);
+            }
             pstmt.executeUpdate();
         } catch (SQLException e) {
             throw new DatabaseException("Error updating balance", e);
@@ -190,15 +199,20 @@ public class DatabaseManager {
      * The increment happens inside a single SQL statement, so concurrent calls
      * can never lose an update.
      *
+     * The stored name is only used when creating a new account; balance changes
+     * never rename an existing account (names are refreshed on player join by
+     * {@code PlayerAccountListener}). This prevents synthetic or stale names
+     * from UUID-based OfflinePlayer lookups from clobbering real names
+     * (e.g., Towny towns/nations).
+     *
      * @return the balance after the operation
      */
     public double addToBalance(UUID uuid, String name, double delta) {
-        String sql = "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, COALESCE(?, 'Unknown'), ?) " +
-                "ON CONFLICT(uuid) DO UPDATE SET balance = balance + excluded.balance, " +
-                "last_known_name = COALESCE(excluded.last_known_name, players.last_known_name)";
+        String sql = "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, ?, ?) " +
+                "ON CONFLICT(uuid) DO UPDATE SET balance = balance + excluded.balance";
         try (PreparedStatement pstmt = conn().prepareStatement(sql)) {
             pstmt.setString(1, uuid.toString());
-            pstmt.setString(2, name);
+            pstmt.setString(2, name != null ? name : "Unknown");
             pstmt.setDouble(3, delta);
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -291,6 +305,26 @@ public class DatabaseManager {
             return null;
         } catch (SQLException e) {
             throw new DatabaseException("Error looking up player UUID", e);
+        }
+    }
+
+    /**
+     * Returns the stored display name for an account, or {@code null} when the
+     * account is unknown. Prefer this over {@code OfflinePlayer.getName()},
+     * which is null or synthetic for accounts that only exist in the economy
+     * database (e.g., Towny towns/nations).
+     */
+    public String getName(UUID uuid) {
+        String sql = "SELECT last_known_name FROM players WHERE uuid = ?";
+        try (PreparedStatement pstmt = conn().prepareStatement(sql)) {
+            pstmt.setString(1, uuid.toString());
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("last_known_name");
+            }
+            return null;
+        } catch (SQLException e) {
+            throw new DatabaseException("Error looking up account name", e);
         }
     }
 }

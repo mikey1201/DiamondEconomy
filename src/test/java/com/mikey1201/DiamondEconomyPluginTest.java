@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.NoSuchElementException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -326,13 +327,40 @@ class DiamondEconomyPluginTest {
     }
 
     @Test
-    void balanceOtherRequiresAdminPermission() {
+    void balanceOtherRequiresBalanceOthersPermission() {
         assertFalse(alice.isOp());
         List<String> msgs = run(alice, "balance Bob");
         assertReceived(msgs, "do not have permission");
 
-        alice.setOp(true);
+        // The documented permission alone (without op) must be sufficient
+        alice.addAttachment(plugin, "diamondeconomy.balance.others", true);
         assertReceived(run(alice, "balance Bob"), "Bob's Balance: 0.00");
+    }
+
+    @Test
+    void commandUsePermissionGateBlocksNegatedPlayers() {
+        // diamondeconomy.use is default-true; servers can negate it to lock
+        // players out of the basic economy commands via the plugin.yml gates.
+        give(alice, Material.DIAMOND, 5);
+        alice.addAttachment(plugin, "diamondeconomy.use", false);
+
+        List<String> msgs = run(alice, "deposit 5");
+        assertEquals(5, count(alice, Material.DIAMOND), "gated command must not execute");
+        assertNotReceived(msgs, "You have deposited");
+    }
+
+    @Test
+    void ecoAndBalanceCanTargetDatabaseOnlyAccounts() throws Exception {
+        // Towny-style account: a row in the economy database, no server player
+        UUID town = UUID.randomUUID();
+        db().updateBalance(town, "Town-Prosperity", 100.0);
+
+        assertTrue(server.dispatchCommand(server.getConsoleSender(), "eco give Town-Prosperity 5"),
+                "eco should accept database-only accounts");
+        assertEquals(105.0, db().getBalance(town));
+
+        alice.addAttachment(plugin, "diamondeconomy.balance.others", true);
+        assertReceived(run(alice, "balance Town-Prosperity"), "Town-Prosperity's Balance: 105.00");
     }
 
     @Test

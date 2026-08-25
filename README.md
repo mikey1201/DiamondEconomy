@@ -7,8 +7,8 @@ A lightweight, highly configurable economy plugin that bridges Vault banking wit
 *   **Configurable Currency:** Tired of Diamonds? Easily switch to Emeralds, Iron Ingots, or Amethyst Shards via `config.yml`.
 *   **Custom Symbols & Formatting:** Change the currency symbol (e.g., from `⬧` to `$`) and fully customize all message colors/translations using `messages.yml`.
 *   **Vault Integration:** Hooks into Vault for seamless compatibility with [Vault](https://github.com/MilkBowl/Vault) plugins (ShopGUIPlus, Essentials, etc.).
-*   **Physical Economy:** Deposit items to bank, withdraw items from bank. Automatically handles inventory space (drops items if full).
-*   **Admin Tools:** Full control over the economy with `/eco` (give, take, set) and `/balance [player]` for offline support.
+*   **Physical Economy:** Deposit items to bank, withdraw items from bank. Withdrawals require free inventory space — items are never dropped or lost.
+*   **Admin Tools:** Full control over the economy with `/eco` (give, take, set) and `/balance [player]` for offline support. Towny-style accounts (towns/nations) can be targeted by name as well.
 *   **Privacy Features:** Players can toggle their visibility on `/baltop`.
 *   **SQLite Database:** Uses a local SQLite database for high performance and crash-safe data storage.
 *   **Fractional Balances:** Supports precise payments down to `0.01`, but players can only withdraw whole items.
@@ -41,17 +41,17 @@ DiamondEconomy creates two files in the plugin folder for easy customization:
 
 | Permission | Description | Default |
 | :--- | :--- | :--- |
-| `diamondeconomy.use` | Use `/pay`, `/deposit`, `/withdraw`. | `true` |
+| `diamondeconomy.use` | Use `/deposit`, `/withdraw`, `/pay`, and view `/baltop`. | `true` |
 | `diamondeconomy.balance.others` | Check balances of other players via `/balance [player]`. | `op` |
 | `diamondeconomy.toggle` | Toggle own visibility in `/baltop`. | `true` |
-| `diamondeconomy.admin` | Use `/eco`, `/diamondeconomy reload`, and checks offline balances. | `op` |
+| `diamondeconomy.admin` | Use `/eco` and `/diamondeconomy reload` (includes all permissions above). | `op` |
 
 ## Commands
 
 | Command | Alias(es) | Description |
 | :--- | :--- | :--- |
 | `/balance [player]` | `/bal` | Check your balance or another player's. |
-| `/deposit <amount\|all>` | `/dep` | Deposit currency items from your inventory. |
+| `/deposit <amount\|all>` | `/depo` | Deposit currency items from your inventory. |
 | `/withdraw <amount\|all>` | `/with` | Withdraw currency items into your inventory. |
 | `/pay <player> <amount>` | `none` | Pays another player from your balance. |
 | `/baltop [toggle]` | `/balancetop` | View the richest players, or toggle visibility. |
@@ -63,7 +63,7 @@ DiamondEconomy creates two files in the plugin folder for easy customization:
 **Depositing**
 ```yaml
 /deposit 5        # Deposits 5 currency items
-/dep all          # Deposits all currency items in your inventory
+/depo all          # Deposits all currency items in your inventory
 ```
 
 **Withdrawing**

@@ -111,7 +111,7 @@ public class DiamondEconomy extends JavaPlugin {
     private void registerCommands() {
         TabCompleter tabCompleter = new CommandTabCompleter();
 
-        this.getCommand("balance").setExecutor(new BalanceCommand(economyProvider, messageManager));
+        this.getCommand("balance").setExecutor(new BalanceCommand(economyProvider, messageManager, databaseManager));
         this.getCommand("balance").setTabCompleter(tabCompleter);
 
         this.getCommand("deposit").setExecutor(new DepositCommand(economyProvider, messageManager, this));

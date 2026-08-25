@@ -178,8 +178,10 @@ public class EconomyProvider extends AbstractEconomy {
     }
 
     private static String playerName(OfflinePlayer player) {
-        // Handle null player names (e.g., Towny town/nation accounts)
-        return player.getName() != null ? player.getName() : "Unknown";
+        // Return the raw name, including null (e.g. Towny town/nation
+        // accounts): the database layer preserves any stored name when the
+        // provided name is null, instead of overwriting it with "Unknown".
+        return player.getName();
     }
 
     /**

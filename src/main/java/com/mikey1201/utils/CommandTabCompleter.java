@@ -26,7 +26,7 @@ public class CommandTabCompleter implements TabCompleter {
 
         // /balance [player]
         if (cmdName.equals("balance")) {
-            if (args.length == 1 && sender.hasPermission("diamondeconomy.admin")) {
+            if (args.length == 1 && sender.hasPermission("diamondeconomy.balance.others")) {
                 return StringUtil.copyPartialMatches(args[0], getOnlinePlayerNames(), new ArrayList<>());
             }
             return Collections.emptyList();
