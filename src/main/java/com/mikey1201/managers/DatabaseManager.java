@@ -8,9 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -23,6 +21,10 @@ import org.bukkit.OfflinePlayer;
  * swallowing errors. Callers must not assume a write succeeded unless the call
  * returns normally; this is critical for an economy plugin where a silently
  * failed withdrawal can duplicate money.
+ *
+ * All balance writes are rounded to 2 decimal places at the SQL layer, so
+ * repeated fractional operations cannot accumulate floating-point drift
+ * (0.1 + 0.2 is stored as exactly 0.3's closest double, never 0.30000000000000004).
  */
 public class DatabaseManager {
 
@@ -31,23 +33,9 @@ public class DatabaseManager {
     private final Logger logger;
 
     /**
-     * Simple record class to hold balance entry data for baltop display.
-     * Contains UUID, stored name, and balance.
+     * Balance entry for baltop display: UUID, stored name, and balance.
      */
-    public static class BalanceEntry {
-        private final UUID uuid;
-        private final String name;
-        private final double balance;
-
-        public BalanceEntry(UUID uuid, String name, double balance) {
-            this.uuid = uuid;
-            this.name = name;
-            this.balance = balance;
-        }
-
-        public UUID getUuid() { return uuid; }
-        public String getName() { return name; }
-        public double getBalance() { return balance; }
+    public record BalanceEntry(UUID uuid, String name, double balance) {
     }
 
     public DatabaseManager(File dataFolder, Logger logger) {
@@ -159,8 +147,8 @@ public class DatabaseManager {
      * if it does not exist yet. Single statement, no read-modify-write race.
      */
     public void setBalance(UUID uuid, double balance) {
-        String sql = "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, 'Unknown', ?) " +
-                "ON CONFLICT(uuid) DO UPDATE SET balance = excluded.balance";
+        String sql = "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, 'Unknown', ROUND(?, 2)) " +
+                "ON CONFLICT(uuid) DO UPDATE SET balance = ROUND(excluded.balance, 2)";
         try (PreparedStatement pstmt = conn().prepareStatement(sql)) {
             pstmt.setString(1, uuid.toString());
             pstmt.setDouble(2, balance);
@@ -179,10 +167,10 @@ public class DatabaseManager {
         // Null names must not clobber the stored name on conflict, so the
         // conflict clause simply omits the name column in that case.
         String sql = (name != null)
-                ? "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, ?, ?) " +
-                  "ON CONFLICT(uuid) DO UPDATE SET balance = excluded.balance, last_known_name = excluded.last_known_name"
-                : "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, 'Unknown', ?) " +
-                  "ON CONFLICT(uuid) DO UPDATE SET balance = excluded.balance";
+                ? "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, ?, ROUND(?, 2)) " +
+                  "ON CONFLICT(uuid) DO UPDATE SET balance = ROUND(excluded.balance, 2), last_known_name = excluded.last_known_name"
+                : "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, 'Unknown', ROUND(?, 2)) " +
+                  "ON CONFLICT(uuid) DO UPDATE SET balance = ROUND(excluded.balance, 2)";
         try (PreparedStatement pstmt = conn().prepareStatement(sql)) {
             pstmt.setString(1, uuid.toString());
             if (name != null) {
@@ -212,8 +200,8 @@ public class DatabaseManager {
      * @return the balance after the operation
      */
     public double addToBalance(UUID uuid, String name, double delta) {
-        String sql = "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, ?, ?) " +
-                "ON CONFLICT(uuid) DO UPDATE SET balance = balance + excluded.balance";
+        String sql = "INSERT INTO players(uuid, last_known_name, balance) VALUES(?, ?, ROUND(?, 2)) " +
+                "ON CONFLICT(uuid) DO UPDATE SET balance = ROUND(balance + excluded.balance, 2)";
         try (PreparedStatement pstmt = conn().prepareStatement(sql)) {
             pstmt.setString(1, uuid.toString());
             pstmt.setString(2, name != null ? name : "Unknown");
@@ -235,7 +223,7 @@ public class DatabaseManager {
      *         the account does not exist or has insufficient funds
      */
     public Double tryWithdraw(UUID uuid, double amount) {
-        String sql = "UPDATE players SET balance = balance - ? WHERE uuid = ? AND balance >= ?";
+        String sql = "UPDATE players SET balance = ROUND(balance - ?, 2) WHERE uuid = ? AND balance >= ?";
         int rowsUpdated;
         try (PreparedStatement pstmt = conn().prepareStatement(sql)) {
             pstmt.setDouble(1, amount);
@@ -250,22 +238,6 @@ public class DatabaseManager {
             return null;
         }
         return getBalance(uuid);
-    }
-
-    public Map<UUID, Double> getTopBalances(int limit) {
-        Map<UUID, Double> topBalances = new LinkedHashMap<>();
-        String sql = "SELECT uuid, balance FROM players ORDER BY balance DESC LIMIT ?";
-        try (PreparedStatement pstmt = conn().prepareStatement(sql)) {
-            pstmt.setInt(1, limit);
-            ResultSet rs = pstmt.executeQuery();
-            while(rs.next()) {
-                UUID uuid = UUID.fromString(rs.getString("uuid"));
-                topBalances.put(uuid, rs.getDouble("balance"));
-            }
-        } catch (SQLException e) {
-            throw new DatabaseException("Error getting top balances", e);
-        }
-        return topBalances;
     }
 
     /**

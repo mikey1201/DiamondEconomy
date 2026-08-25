@@ -201,9 +201,56 @@ class DatabaseManagerTest {
 
         List<DatabaseManager.BalanceEntry> top = db.getTopBalancesWithNames(10);
         assertEquals(2, top.size());
-        assertEquals("Rich", top.get(0).getName());
-        assertEquals(500.0, top.get(0).getBalance());
-        assertEquals(a, top.get(0).getUuid());
-        assertEquals("Poor", top.get(1).getName());
+        assertEquals("Rich", top.get(0).name());
+        assertEquals(500.0, top.get(0).balance());
+        assertEquals(a, top.get(0).uuid());
+        assertEquals("Poor", top.get(1).name());
+    }
+
+    // ---- Round-on-write: no floating-point drift accumulation ----
+
+    @Test
+    void fractionalAdditionsDoNotAccumulateFloatDrift() {
+        // The classic: 0.1 + 0.2 == 0.30000000000000004 in plain double math
+        UUID uuid = UUID.randomUUID();
+        db.addToBalance(uuid, "Alice", 0.1);
+        db.addToBalance(uuid, "Alice", 0.2);
+        assertEquals(0.3, db.getBalance(uuid), "0.1 + 0.2 must be stored as exactly 0.3");
+
+        // 0.3 (carried) + 0.3 + 0.3 + 0.3 + 0.1 must be exactly 1.3
+        db.addToBalance(uuid, "Alice", 0.3);
+        db.addToBalance(uuid, "Alice", 0.3);
+        db.addToBalance(uuid, "Alice", 0.3);
+        db.addToBalance(uuid, "Alice", 0.1);
+        assertEquals(1.3, db.getBalance(uuid));
+    }
+
+    @Test
+    void thousandsOfTinyDepositsStayExact() {
+        UUID uuid = UUID.randomUUID();
+        for (int i = 0; i < 1000; i++) {
+            db.addToBalance(uuid, "Alice", 0.1);
+        }
+        assertEquals(100.0, db.getBalance(uuid), "1000 x 0.1 must be exactly 100.0");
+    }
+
+    @Test
+    void withdrawalsAreRoundedToTwoDecimals() {
+        UUID uuid = UUID.randomUUID();
+        db.setBalance(uuid, 10.0);
+        for (int i = 0; i < 10; i++) {
+            Double result = db.tryWithdraw(uuid, 0.3);
+            assertNotNull(result);
+        }
+        assertEquals(7.0, db.getBalance(uuid), "10.0 - 10 x 0.3 must be exactly 7.0");
+    }
+
+    @Test
+    void setBalanceRoundsToTwoDecimals() {
+        UUID uuid = UUID.randomUUID();
+        db.setBalance(uuid, 1.9999999999);
+        assertEquals(2.0, db.getBalance(uuid));
+        db.updateBalance(uuid, "Alice", 0.0050000001);
+        assertEquals(0.01, db.getBalance(uuid));
     }
 }

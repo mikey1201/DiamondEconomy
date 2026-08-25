@@ -126,5 +126,13 @@
             <version>4.0.0</version>
             <scope>test</scope>
         </dependency>
+        <!-- Gson is bundled by every Paper/CraftBukkit server at runtime, so it
+             is only needed on the compile/test classpath, not in the jar. -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

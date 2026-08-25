@@ -75,19 +75,19 @@ public class BaltopCommand implements CommandExecutor {
         for (BalanceEntry entry : potentialBalances) {
             if (count >= 10) break;
 
-            if (hiddenPlayersManager.isHidden(entry.getUuid())) {
+            if (hiddenPlayersManager.isHidden(entry.uuid())) {
                 continue;
             }
 
             // Use the stored name from the database instead of relying on
             // OfflinePlayer.getName(), which returns null for non-player
             // accounts like Towny towns/nations.
-            String playerName = entry.getName();
+            String playerName = entry.name();
             if (playerName == null || playerName.isEmpty()) {
                 playerName = "Unknown";
             }
-            
-            String formattedBalance = economy.format(entry.getBalance());
+
+            String formattedBalance = economy.format(entry.balance());
             
             sender.sendMessage(messages.get("baltop.entry", 
                 "{rank}", String.valueOf(count + 1), 
