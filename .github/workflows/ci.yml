@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: Build, Test, Verify Java 17 Bytecode (Java 21)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      # MockBukkit ships Java 21 bytecode, so the test suite needs a Java 21
+      # toolchain. The plugin itself still compiles to Java 17 bytecode
+      # (maven.compiler.release=17), which the assertion below proves on
+      # every build. A Java 17 compile job is not possible here: the
+      # paper-api dependency itself is Java 21 bytecode, which a JDK 17
+      # compiler cannot even read.
+      - name: Build and test
+        run: mvn -B clean verify
+
+      - name: Assert Java 17 bytecode (class file major version 61)
+        run: |
+          python3 - <<'PYEOF'
+          import pathlib, struct, sys
+          bad = []
+          count = 0
+          for f in pathlib.Path('target/classes').rglob('*.class'):
+              count += 1
+              major = struct.unpack('>H', f.read_bytes()[6:8])[0]
+              if major != 61:
+                  bad.append((str(f), major))
+          if bad:
+              for f, m in bad:
+                  print(f'FAIL: {f} is class file major version {m}, expected 61 (Java 17)')
+              sys.exit(1)
+          print(f'OK: all {count} compiled classes are Java 17 bytecode (major version 61)')
+          PYEOF
+
+      - name: Upload plugin jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: DiamondEconomy-jar
+          path: target/DiamondEconomy-*.jar
+          if-no-files-found: error

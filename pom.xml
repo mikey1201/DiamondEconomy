@@ -12,8 +12,14 @@
     <name>DiamondEconomy</name>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <!-- release=17 compiles against the exact Java 17 API set, so building
+             on a newer JDK cannot accidentally use JDK 18+ APIs that would
+             fail at runtime with NoSuchMethodError on a Java 17 server.
+             CI additionally asserts the produced bytecode is major version 61
+             (Java 17). Note: tests require a Java 21 toolchain because
+             MockBukkit ships Java 21 classes; that does not affect the
+             plugin's own Java 17 compatibility. -->
+        <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.2</junit.version>
     </properties>
@@ -30,8 +36,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.10.1</version>
                 <configuration>
-                    <source>17</source>
-                    <target>17</target>
+                    <release>17</release>
                 </configuration>
             </plugin>
             <plugin>
